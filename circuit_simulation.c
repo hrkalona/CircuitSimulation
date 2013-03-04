@@ -2,7 +2,7 @@
 
 double *matrix_G, *matrix_C, *vector_b, *vector_y, *vector_x, *temp_matrix, *temp_matrix2;
 int *transposition;
-char *node_real_names, *group_two_names;
+char *node_real_names;
 int *node_dc_plot_vector, *node_transient_plot_vector;
 char *sweep_name;
 struct twoTerminalsElement** sources;
