@@ -1,27 +1,20 @@
 #include "circuit_simulation.h" 
 
-struct twoTerminalsElement *head_twoTerminalsElement_list = NULL, *last_twoTerminalsElement_list = NULL;
-struct threeTerminalsElement *head_threeTerminalsElement_list = NULL, *last_threeTerminalsElement_list = NULL;
-struct fourTerminalsElement *head_fourTerminalsElement_list = NULL, *last_fourTerminalsElement_list = NULL;
-struct hash_node * head_hash_node_list[HASH_TABLE_SIZE];
-
-int ground_found = 0;
-
+int counter = 1;
 
 void parseInput(FILE *p_file) {
   char line[SIZE_OF_LINE];
   char *temp;
-  struct twoTerminalsElement *current1 = NULL;
-  struct threeTerminalsElement *current2 = NULL;
-  struct fourTerminalsElement *current3 = NULL;
-  int counter = 1, i, j, temp_group2 = 0, temp3;
+  twoTerminalsElement *current1 = NULL;
+  threeTerminalsElement *current2 = NULL;
+  fourTerminalsElement *current3 = NULL;
+  int i, j, k, temp_group2 = 0, temp3;
   
-     
      printf("\n\nInf-Uth Spice starting!\n\n");
      
-     printf("\n\nParsing...\n\n");
+     printf("\n\nParsing circuit...\n\n");
+
      
-  
      /*read the next line of the file */
      while(fgets(line, SIZE_OF_LINE, p_file) != NULL) {
        /*ignore the space and tab characters at the beginning of the line */
@@ -32,7 +25,7 @@ void parseInput(FILE *p_file) {
 	    case 'v':
 	    case 'V':
 	    
-		current1 = (struct twoTerminalsElement*) malloc(sizeof(struct twoTerminalsElement));
+		current1 = (twoTerminalsElement*) malloc(sizeof(twoTerminalsElement));
 		
 		if(current1 == NULL) {
 		    printf("Could not allocate new node.\n");
@@ -64,7 +57,7 @@ void parseInput(FILE *p_file) {
 	            exit(-1);
 		}
 	 	      
-		current1 -> positive_terminal = hash(temp);
+		current1 -> positive_terminal = insert_node(temp);
 		
 		temp = strtok(NULL, "\t ");
 		
@@ -74,7 +67,7 @@ void parseInput(FILE *p_file) {
 	            exit(-1);
 		}
 	      	      
-		current1 -> negative_terminal = hash(temp);	
+		current1 -> negative_terminal = insert_node(temp);	
 		
 		temp = strtok(NULL, "\t \n");
 		
@@ -83,17 +76,439 @@ void parseInput(FILE *p_file) {
 	            printf("Terminating.\n");
 	            exit(-1);
 		}
-	      
-		current1 -> value = atof(temp);
+
+		current1 -> value = invalid_number_checker(temp);
 
 		temp = strtok(NULL, "\t \n(,");
 		
 		if(temp == NULL || temp[0] == 13) {
-		    current1 -> transient  = NULL;
+		    current1 -> transient = NULL;
+		    current1 -> ac = NULL;
+		}
+		else if(!strcasecmp(temp, "AC")) {
+		    current1 -> ac = (acComponent*) malloc(sizeof(acComponent));
+		    
+		    if(current1 -> ac == NULL) {
+			printf("Could not allocate new node.\n");
+			printf("Terminating.\n");
+			exit(-1);
+		    }
+		    
+		    temp = strtok(NULL, "\t ");
+			
+		    if(temp == NULL || temp[0] == 13 || temp[0] == 10) {
+		        printf("Expecting more inputs at line %d.\n", counter);
+		        printf("Terminating.\n");
+		        exit(-1);
+		    }
+		       			
+		    current1 -> ac -> mag = invalid_number_checker(temp);	    
+		    
+		    if(current1 -> ac -> mag < 0) {
+		        printf("Magnitude must be greater than -1 at line %d.\n", counter);
+		        printf("Terminating.\n");
+		        exit(-1);
+		    }
+		    
+		    temp = strtok(NULL, "\t ");
+			
+		    if(temp == NULL || temp[0] == 13 || temp[0] == 10) {
+	                printf("Expecting more inputs at line %d.\n", counter);
+		        printf("Terminating.\n");
+		        exit(-1);
+		    }
+			
+		    current1 -> ac -> phase = invalid_number_checker(temp);
+		    
+		    temp = strtok(NULL, "\t \n(,");	
+
+		    if(temp == NULL || temp[0] == 13) {
+		        current1 -> transient = NULL;
+		    }
+		    else {
+		      
+			current1 -> transient = (transientComponent*) malloc(sizeof(transientComponent));
+			
+			if(current1 -> transient == NULL) {
+			    printf("Could not allocate new node.\n");
+			    printf("Terminating.\n");
+			    exit(-1);
+			}
+			
+			if(!strcasecmp(temp, "EXP")) {
+			    current1 -> transient -> impulse = EXP;
+			    
+			    current1 -> transient -> exp = (ExpImpulse*) malloc(sizeof(ExpImpulse));
+			    current1 -> transient -> sin = NULL;
+			    current1 -> transient -> pulse = NULL;
+			    current1 -> transient -> pwl = NULL;
+			    
+			    if(current1 -> transient -> exp == NULL) {
+				printf("Could not allocate new node.\n");
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			    
+			    temp = strtok(NULL, "\t (),");
+			    
+			    if(temp == NULL || temp[0] == 13 || temp[0] == 10) {
+				printf("Expecting more inputs at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+					    
+			    current1 -> transient -> exp -> i1 = invalid_number_checker(temp);
+			    
+			    if(fabs(current1 -> value - current1 -> transient -> exp -> i1) > ZERO) {
+				printf("The first argument of exp and value must be the same, at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			    
+			    temp = strtok(NULL, "\t ),");
+			    
+			    if(temp == NULL || temp[0] == 13 || temp[0] == 10) {
+				printf("Expecting more inputs at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			    
+			    current1 -> transient -> exp -> i2 = invalid_number_checker(temp);
+			    
+			    temp = strtok(NULL, "\t ),");
+			    
+			    if(temp == NULL || temp[0] == 13 || temp[0] == 10) {
+				printf("Expecting more inputs at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			    
+			    current1 -> transient -> exp -> td1 = invalid_number_checker(temp);
+			    
+			    temp = strtok(NULL, "\t ),");
+			    
+			    if(temp == NULL || temp[0] == 13 || temp[0] == 10) {
+				printf("Expecting more inputs at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			    
+			    current1 -> transient -> exp -> tc1 = invalid_number_checker(temp);
+			    
+			    temp = strtok(NULL, "\t ),");
+			    
+			    if(temp == NULL || temp[0] == 13 || temp[0] == 10) {
+				printf("Expecting more inputs at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+		    
+			    current1 -> transient -> exp -> td2 = invalid_number_checker(temp);
+			    
+			    temp = strtok(NULL, "\t ),");
+			    
+			    if(temp == NULL || temp[0] == 13 || temp[0] == 10) {
+				printf("Expecting more inputs at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			    
+			    current1 -> transient -> exp -> tc2 = invalid_number_checker(temp);
+			    
+			    current1 -> transient -> vals = NULL;
+			    
+					    
+			    temp = strtok(NULL, "\t \n),");
+	    
+			
+			    if(temp != NULL && temp[0] != 13) {
+				printf("Too many inputs at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			}
+			else if(!strcasecmp(temp, "SIN")) {
+			    current1 -> transient -> impulse = SIN;
+			    
+			    current1 -> transient -> exp = NULL;
+			    current1 -> transient -> sin = (SinImpulse*) malloc(sizeof(SinImpulse));
+			    current1 -> transient -> pulse = NULL;
+			    current1 -> transient -> pwl = NULL;
+			    
+			    if(current1 -> transient -> sin == NULL) {
+				printf("Could not allocate new node.\n");
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			    
+			    temp = strtok(NULL, "\t (),");
+			    
+			    if(temp == NULL || temp[0] == 13 || temp[0] == 10) {
+				printf("Expecting more inputs at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			    
+			    current1 -> transient -> sin -> i1 = invalid_number_checker(temp);
+			    
+			    if(fabs(current1 -> value - current1 -> transient -> sin -> i1) > ZERO) {
+				printf("The first argument of sin and value must be the same, at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			    
+			    temp = strtok(NULL, "\t ),");
+			    
+			    if(temp == NULL || temp[0] == 13 || temp[0] == 10) {
+				printf("Expecting more inputs at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			    
+			    current1 -> transient -> sin -> ia = invalid_number_checker(temp);
+			    
+			    temp = strtok(NULL, "\t ),");
+			    
+			    if(temp == NULL || temp[0] == 13 || temp[0] == 10) {
+				printf("Expecting more inputs at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			    
+			    current1 -> transient -> sin -> fr = invalid_number_checker(temp);
+			    
+			    temp = strtok(NULL, "\t ),");
+			    
+			    if(temp == NULL || temp[0] == 13 || temp[0] == 10) {
+				printf("Expecting more inputs at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			    
+			    current1 -> transient -> sin -> td = invalid_number_checker(temp);
+			    
+			    temp = strtok(NULL, "\t ),");
+			    
+			    if(temp == NULL || temp[0] == 13 || temp[0] == 10) {
+				printf("Expecting more inputs at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+		    
+			    current1 -> transient -> sin -> df = invalid_number_checker(temp);
+			    
+			    temp = strtok(NULL, "\t ),");
+			    
+			    if(temp == NULL || temp[0] == 13 || temp[0] == 10) {
+				printf("Expecting more inputs at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			    
+			    current1 -> transient -> sin -> ph = invalid_number_checker(temp);
+			    
+			    current1 -> transient -> vals = NULL;
+			    
+					    
+			    temp = strtok(NULL, "\t \n),");
+	    
+			
+			    if(temp != NULL && temp[0] != 13) {
+				printf("Too many inputs at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			}
+			else if(!strcasecmp(temp, "PULSE")) {
+			    current1 -> transient -> impulse = PULSE;
+			    
+			    current1 -> transient -> exp = NULL;
+			    current1 -> transient -> sin = NULL;
+			    current1 -> transient -> pulse = (PulseImpulse*) malloc(sizeof(PulseImpulse));
+			    current1 -> transient -> pwl = NULL;
+			    
+			    if(current1 -> transient -> pulse == NULL) {
+				printf("Could not allocate new node.\n");
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			    
+			    temp = strtok(NULL, "\t (),");
+			    
+			    if(temp == NULL || temp[0] == 13 || temp[0] == 10) {
+				printf("Expecting more inputs at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			    
+			    current1 -> transient -> pulse -> i1 = invalid_number_checker(temp);
+			    
+			    if(fabs(current1 -> value - current1 -> transient -> pulse -> i1) > ZERO) {
+				printf("The first argument of pulse and value must be the same, at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			    
+			    temp = strtok(NULL, "\t ),");
+			    
+			    if(temp == NULL || temp[0] == 13 || temp[0] == 10) {
+				printf("Expecting more inputs at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			    
+			    current1 -> transient -> pulse -> i2 = invalid_number_checker(temp);
+			    
+			    temp = strtok(NULL, "\t ),");
+			    
+			    if(temp == NULL || temp[0] == 13 || temp[0] == 10) {
+				printf("Expecting more inputs at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			    
+			    current1 -> transient -> pulse -> td = invalid_number_checker(temp);
+			    
+			    temp = strtok(NULL, "\t ),");
+			    
+			    if(temp == NULL || temp[0] == 13 || temp[0] == 10) {
+				printf("Expecting more inputs at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			    
+			    current1 -> transient -> pulse -> tr = invalid_number_checker(temp);
+			    
+			    temp = strtok(NULL, "\t ),");
+			    
+			    if(temp == NULL || temp[0] == 13 || temp[0] == 10) {
+				printf("Expecting more inputs at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+		    
+			    current1 -> transient -> pulse -> tf = invalid_number_checker(temp);
+			    
+			    temp = strtok(NULL, "\t ),");
+			    
+			    if(temp == NULL || temp[0] == 13 || temp[0] == 10) {
+				printf("Expecting more inputs at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			    
+			    current1 -> transient -> pulse -> pw = invalid_number_checker(temp);
+			    
+			    temp = strtok(NULL, "\t ),");
+			    
+			    if(temp == NULL || temp[0] == 13 || temp[0] == 10) {
+				printf("Expecting more inputs at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			    
+			    current1 -> transient -> pulse -> per = invalid_number_checker(temp);
+			    
+			    current1 -> transient -> vals = NULL;
+			    
+					    
+			    temp = strtok(NULL, "\t \n),");
+	    			
+			    if(temp != NULL && temp[0] != 13) {
+				printf("Too many inputs at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }			     
+			}
+			else if(!strcasecmp(temp, "PWL")) {
+			    current1 -> transient -> impulse = PWL;
+			    
+			    current1 -> transient -> exp = NULL;
+			    current1 -> transient -> sin = NULL;
+			    current1 -> transient -> pulse = NULL;
+			    current1 -> transient -> pwl = (PWLImpulse*) malloc(sizeof(PWLImpulse));
+			    
+			    if(current1 -> transient -> pwl == NULL) {
+				printf("Could not allocate new node.\n");
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			    
+			    j = 0;
+			    current1 -> transient -> pwl -> length = 0;
+			    
+			    current1 -> transient -> pwl -> t = (double *) malloc((j + 1) * sizeof(double));
+			    current1 -> transient -> pwl -> i = (double *) malloc((j + 1) * sizeof(double));
+			    
+			    if(current1 -> transient -> pwl -> t == NULL || current1 -> transient -> pwl -> i == NULL) {
+				printf("Could not allocate matrices.\n");
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			    
+			    temp = strtok(NULL, "\t (),");
+			    
+			    do {
+			    
+				current1 -> transient -> pwl -> t = realloc(current1 -> transient -> pwl -> t, (j + 1) * sizeof(double));
+				current1 -> transient -> pwl -> i = realloc(current1 -> transient -> pwl -> i, (j + 1) * sizeof(double));
+				
+				if(current1 -> transient -> pwl -> t == NULL || current1 -> transient -> pwl -> i == NULL) {
+				    printf("Could not allocate matrices.\n");
+				    printf("Terminating.\n");
+				    exit(-1);
+				}
+
+				if(temp == NULL || temp[0] == 13 || temp[0] == 10) {
+				    printf("Expecting more inputs at line %d.\n", counter);
+				    printf("Terminating.\n");
+				    exit(-1);
+				}
+				
+				current1 -> transient -> pwl -> t[j] = invalid_number_checker(temp);
+				
+				temp = strtok(NULL, "\t ),");
+				
+				if(temp == NULL || temp[0] == 13 || temp[0] == 10) {
+				    printf("Expecting more inputs at line %d.\n", counter);
+				    printf("Terminating.\n");
+				    exit(-1);
+				}
+				
+				current1 -> transient -> pwl -> i[j] = invalid_number_checker(temp);
+							
+				j++;
+				
+				current1 -> transient -> pwl -> length++;
+				
+				temp = strtok(NULL, "\t (),");
+				
+			    } while(temp != NULL && temp[0] != 13 && temp[0] != 10);
+			    
+			    current1 -> transient -> pwl -> t[0] = 0;
+			    
+			    if(current1 -> transient -> pwl -> length < 2) {
+				printf("The inputs for the piece wise linear need to be at least 2, at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			    
+			    if(fabs(current1 -> value - current1 -> transient -> pwl -> i[0]) > ZERO) {
+				printf("The first argument of pwl and value must be the same, at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }			    
+			}
+			else {
+			    printf("Cannot parse line %d.\n", counter);
+			    printf("Terminating.\n");
+			    exit(-1);
+			}
+		    }		        
 		}
 		else {
 		  
-		    current1 -> transient = (struct transientComponent*) malloc(sizeof(struct transientComponent));
+		    current1 -> transient = (transientComponent*) malloc(sizeof(transientComponent));
 		    
 		    if(current1 -> transient == NULL) {
 			printf("Could not allocate new node.\n");
@@ -104,7 +519,7 @@ void parseInput(FILE *p_file) {
 		    if(!strcasecmp(temp, "EXP")) {
 			current1 -> transient -> impulse = EXP;
 			
-			current1 -> transient -> exp = (struct ExpImpulse*) malloc(sizeof(struct ExpImpulse));
+			current1 -> transient -> exp = (ExpImpulse*) malloc(sizeof(ExpImpulse));
 			current1 -> transient -> sin = NULL;
 			current1 -> transient -> pulse = NULL;
 			current1 -> transient -> pwl = NULL;
@@ -122,8 +537,8 @@ void parseInput(FILE *p_file) {
 			    printf("Terminating.\n");
 			    exit(-1);
 		        }
-			
-			current1 -> transient -> exp -> i1 = atof(temp);
+		       			
+			current1 -> transient -> exp -> i1 = invalid_number_checker(temp);
 			
 			if(fabs(current1 -> value - current1 -> transient -> exp -> i1) > ZERO) {
 			    printf("The first argument of exp and value must be the same, at line %d.\n", counter);
@@ -139,7 +554,7 @@ void parseInput(FILE *p_file) {
 			    exit(-1);
 		        }
 			
-			current1 -> transient -> exp -> i2 = atof(temp);
+			current1 -> transient -> exp -> i2 = invalid_number_checker(temp);
 			
 			temp = strtok(NULL, "\t ),");
 			
@@ -149,7 +564,7 @@ void parseInput(FILE *p_file) {
 			    exit(-1);
 		        }
 			
-			current1 -> transient -> exp -> td1 = atof(temp);
+			current1 -> transient -> exp -> td1 = invalid_number_checker(temp);
 			
 			temp = strtok(NULL, "\t ),");
 			
@@ -159,7 +574,7 @@ void parseInput(FILE *p_file) {
 			    exit(-1);
 		        }
 			
-			current1 -> transient -> exp -> tc1 = atof(temp);
+			current1 -> transient -> exp -> tc1 = invalid_number_checker(temp);
 			
 			temp = strtok(NULL, "\t ),");
 			
@@ -169,7 +584,7 @@ void parseInput(FILE *p_file) {
 			    exit(-1);
 		        }
 		
-			current1 -> transient -> exp -> td2 = atof(temp);
+			current1 -> transient -> exp -> td2 = invalid_number_checker(temp);
 			
 			temp = strtok(NULL, "\t ),");
 			
@@ -179,26 +594,66 @@ void parseInput(FILE *p_file) {
 			    exit(-1);
 		        }
 			
-			current1 -> transient -> exp -> tc2 = atof(temp);
+			current1 -> transient -> exp -> tc2 = invalid_number_checker(temp);
 			
 			current1 -> transient -> vals = NULL;
 			
 					
 			temp = strtok(NULL, "\t \n),");
 	
-		    
-			if(temp != NULL && temp[0] != 13) {
-			    printf("Too many inputs at line %d.\n", counter);
-			    printf("Terminating.\n");
-			    exit(-1);
-			}
 
+			if(temp == NULL || temp[0] == 13) {
+		            current1 -> ac = NULL;
+		        }		
+			else if(!strcasecmp(temp, "AC")) {
+			    current1 -> ac = (acComponent*) malloc(sizeof(acComponent));
+			    
+			    if(current1 -> ac == NULL) {
+				printf("Could not allocate new node.\n");
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			    
+			    temp = strtok(NULL, "\t ");
+				
+			    if(temp == NULL || temp[0] == 13 || temp[0] == 10) {
+				printf("Expecting more inputs at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+						
+			    current1 -> ac -> mag = invalid_number_checker(temp);
+			    
+			    if(current1 -> ac -> mag < 0) {
+				printf("Magnitude must be greater than -1 at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			    
+			    temp = strtok(NULL, "\t ");
+				
+			    if(temp == NULL || temp[0] == 13 || temp[0] == 10) {
+				printf("Expecting more inputs at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+				
+			    current1 -> ac -> phase = invalid_number_checker(temp);
+			    
+			    temp = strtok(NULL, "\t \n");	
+			    
+			    if(temp != NULL && temp[0] != 13) {
+				printf("Too many inputs at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			}
 		    }
 		    else if(!strcasecmp(temp, "SIN")) {
 			current1 -> transient -> impulse = SIN;
 			
 			current1 -> transient -> exp = NULL;
-			current1 -> transient -> sin = (struct SinImpulse*) malloc(sizeof(struct SinImpulse));
+			current1 -> transient -> sin = (SinImpulse*) malloc(sizeof(SinImpulse));
 			current1 -> transient -> pulse = NULL;
 			current1 -> transient -> pwl = NULL;
 			
@@ -216,7 +671,7 @@ void parseInput(FILE *p_file) {
 			    exit(-1);
 		        }
 			
-			current1 -> transient -> sin -> i1 = atof(temp);
+			current1 -> transient -> sin -> i1 = invalid_number_checker(temp);
 			
 			if(fabs(current1 -> value - current1 -> transient -> sin -> i1) > ZERO) {
 			    printf("The first argument of sin and value must be the same, at line %d.\n", counter);
@@ -232,7 +687,7 @@ void parseInput(FILE *p_file) {
 			    exit(-1);
 		        }
 			
-			current1 -> transient -> sin -> ia = atof(temp);
+			current1 -> transient -> sin -> ia = invalid_number_checker(temp);
 			
 			temp = strtok(NULL, "\t ),");
 			
@@ -242,7 +697,7 @@ void parseInput(FILE *p_file) {
 			    exit(-1);
 		        }
 			
-			current1 -> transient -> sin -> fr = atof(temp);
+			current1 -> transient -> sin -> fr = invalid_number_checker(temp);
 			
 			temp = strtok(NULL, "\t ),");
 			
@@ -252,7 +707,7 @@ void parseInput(FILE *p_file) {
 			    exit(-1);
 		        }
 			
-			current1 -> transient -> sin -> td = atof(temp);
+			current1 -> transient -> sin -> td = invalid_number_checker(temp);
 			
 			temp = strtok(NULL, "\t ),");
 			
@@ -262,7 +717,7 @@ void parseInput(FILE *p_file) {
 			    exit(-1);
 		        }
 		
-			current1 -> transient -> sin -> df = atof(temp);
+			current1 -> transient -> sin -> df = invalid_number_checker(temp);
 			
 			temp = strtok(NULL, "\t ),");
 			
@@ -272,27 +727,67 @@ void parseInput(FILE *p_file) {
 			    exit(-1);
 		        }
 			
-			current1 -> transient -> sin -> ph = atof(temp);
+			current1 -> transient -> sin -> ph = invalid_number_checker(temp);
 			
 			current1 -> transient -> vals = NULL;
 			
 					
 			temp = strtok(NULL, "\t \n),");
 	
-		    
-			if(temp != NULL && temp[0] != 13) {
-			    printf("Too many inputs at line %d.\n", counter);
-			    printf("Terminating.\n");
-			    exit(-1);
+		   
+			if(temp == NULL || temp[0] == 13) {
+		            current1 -> ac = NULL;
+		        }		
+			else if(!strcasecmp(temp, "AC")) {
+			    current1 -> ac = (acComponent*) malloc(sizeof(acComponent));
+			    
+			    if(current1 -> ac == NULL) {
+				printf("Could not allocate new node.\n");
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			    
+			    temp = strtok(NULL, "\t ");
+				
+			    if(temp == NULL || temp[0] == 13 || temp[0] == 10) {
+				printf("Expecting more inputs at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+						
+			    current1 -> ac -> mag = invalid_number_checker(temp);
+			    
+			    if(current1 -> ac -> mag < 0) {
+				printf("Magnitude must be greater than -1 at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			    
+			    temp = strtok(NULL, "\t ");
+				
+			    if(temp == NULL || temp[0] == 13 || temp[0] == 10) {
+				printf("Expecting more inputs at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+				
+			    current1 -> ac -> phase = invalid_number_checker(temp);
+			    
+			    temp = strtok(NULL, "\t \n");	
+			    
+			    if(temp != NULL && temp[0] != 13) {
+				printf("Too many inputs at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
 			}
-		    
 		    }
 		    else if(!strcasecmp(temp, "PULSE")) {
 			current1 -> transient -> impulse = PULSE;
 			
 			current1 -> transient -> exp = NULL;
 			current1 -> transient -> sin = NULL;
-			current1 -> transient -> pulse = (struct PulseImpulse*) malloc(sizeof(struct PulseImpulse));
+			current1 -> transient -> pulse = (PulseImpulse*) malloc(sizeof(PulseImpulse));
 			current1 -> transient -> pwl = NULL;
 			
 			if(current1 -> transient -> pulse == NULL) {
@@ -309,7 +804,7 @@ void parseInput(FILE *p_file) {
 			    exit(-1);
 		        }
 			
-			current1 -> transient -> pulse -> i1 = atof(temp);
+			current1 -> transient -> pulse -> i1 = invalid_number_checker(temp);
 			
 			if(fabs(current1 -> value - current1 -> transient -> pulse -> i1) > ZERO) {
 			    printf("The first argument of pulse and value must be the same, at line %d.\n", counter);
@@ -325,7 +820,7 @@ void parseInput(FILE *p_file) {
 			    exit(-1);
 		        }
 			
-			current1 -> transient -> pulse -> i2 = atof(temp);
+			current1 -> transient -> pulse -> i2 = invalid_number_checker(temp);
 			
 			temp = strtok(NULL, "\t ),");
 			
@@ -335,7 +830,7 @@ void parseInput(FILE *p_file) {
 			    exit(-1);
 		        }
 			
-			current1 -> transient -> pulse -> td = atof(temp);
+			current1 -> transient -> pulse -> td = invalid_number_checker(temp);
 			
 			temp = strtok(NULL, "\t ),");
 			
@@ -345,7 +840,7 @@ void parseInput(FILE *p_file) {
 			    exit(-1);
 		        }
 			
-			current1 -> transient -> pulse -> tr = atof(temp);
+			current1 -> transient -> pulse -> tr = invalid_number_checker(temp);
 			
 			temp = strtok(NULL, "\t ),");
 			
@@ -355,7 +850,7 @@ void parseInput(FILE *p_file) {
 			    exit(-1);
 		        }
 		
-			current1 -> transient -> pulse -> tf = atof(temp);
+			current1 -> transient -> pulse -> tf = invalid_number_checker(temp);
 			
 			temp = strtok(NULL, "\t ),");
 			
@@ -365,7 +860,7 @@ void parseInput(FILE *p_file) {
 			    exit(-1);
 		        }
 			
-			current1 -> transient -> pulse -> pw = atof(temp);
+			current1 -> transient -> pulse -> pw = invalid_number_checker(temp);
 			
 			temp = strtok(NULL, "\t ),");
 			
@@ -375,7 +870,7 @@ void parseInput(FILE *p_file) {
 			    exit(-1);
 		        }
 			
-			current1 -> transient -> pulse -> per = atof(temp);
+			current1 -> transient -> pulse -> per = invalid_number_checker(temp);
 			
 			current1 -> transient -> vals = NULL;
 			
@@ -383,12 +878,52 @@ void parseInput(FILE *p_file) {
 			temp = strtok(NULL, "\t \n),");
 	
 		    
-			if(temp != NULL && temp[0] != 13) {
-			    printf("Too many inputs at line %d.\n", counter);
-			    printf("Terminating.\n");
-			    exit(-1);
-			}
-		    
+			if(temp == NULL || temp[0] == 13) {
+		            current1 -> ac = NULL;
+		        }		
+			else if(!strcasecmp(temp, "AC")) {
+			    current1 -> ac = (acComponent*) malloc(sizeof(acComponent));
+			    
+			    if(current1 -> ac == NULL) {
+				printf("Could not allocate new node.\n");
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			    
+			    temp = strtok(NULL, "\t ");
+				
+			    if(temp == NULL || temp[0] == 13 || temp[0] == 10) {
+				printf("Expecting more inputs at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+						
+			    current1 -> ac -> mag = invalid_number_checker(temp);
+			    
+			    if(current1 -> ac -> mag < 0) {
+				printf("Magnitude must be greater than -1 at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			    
+			    temp = strtok(NULL, "\t ");
+				
+			    if(temp == NULL || temp[0] == 13 || temp[0] == 10) {
+				printf("Expecting more inputs at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+				
+			    current1 -> ac -> phase = invalid_number_checker(temp);
+			    
+			    temp = strtok(NULL, "\t \n");	
+			    
+			    if(temp != NULL && temp[0] != 13) {
+				printf("Too many inputs at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			} 
 		    }
 		    else if(!strcasecmp(temp, "PWL")) {
 			current1 -> transient -> impulse = PWL;
@@ -396,7 +931,7 @@ void parseInput(FILE *p_file) {
 			current1 -> transient -> exp = NULL;
 			current1 -> transient -> sin = NULL;
 			current1 -> transient -> pulse = NULL;
-			current1 -> transient -> pwl = (struct PWLImpulse*) malloc(sizeof(struct PWLImpulse));
+			current1 -> transient -> pwl = (PWLImpulse*) malloc(sizeof(PWLImpulse));
 			
 			if(current1 -> transient -> pwl == NULL) {
 			    printf("Could not allocate new node.\n");
@@ -419,6 +954,9 @@ void parseInput(FILE *p_file) {
 			temp = strtok(NULL, "\t (),");
 			
 			do {
+			    if(!strcasecmp(temp, "AC")) {
+			        break;
+			    }
 			
 			    current1 -> transient -> pwl -> t = realloc(current1 -> transient -> pwl -> t, (j + 1) * sizeof(double));
 			    current1 -> transient -> pwl -> i = realloc(current1 -> transient -> pwl -> i, (j + 1) * sizeof(double));
@@ -435,7 +973,7 @@ void parseInput(FILE *p_file) {
 				exit(-1);
 			    }
 			    
-			    current1 -> transient -> pwl -> t[j] = atof(temp);
+			    current1 -> transient -> pwl -> t[j] = invalid_number_checker(temp);
 			    
 			    temp = strtok(NULL, "\t ),");
 			    
@@ -445,7 +983,7 @@ void parseInput(FILE *p_file) {
 				exit(-1);
 			    }
 			    
-			    current1 -> transient -> pwl -> i[j] = atof(temp);
+			    current1 -> transient -> pwl -> i[j] = invalid_number_checker(temp);
 			    			    
 			    j++;
 			    
@@ -468,14 +1006,56 @@ void parseInput(FILE *p_file) {
 			    printf("Terminating.\n");
 			    exit(-1);
 			}
-
+			
+			if(!strcasecmp(temp, "AC")) {
+			    current1 -> ac = (acComponent*) malloc(sizeof(acComponent));
+			    
+			    if(current1 -> ac == NULL) {
+				printf("Could not allocate new node.\n");
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			    
+			    temp = strtok(NULL, "\t ");
+				
+			    if(temp == NULL || temp[0] == 13 || temp[0] == 10) {
+				printf("Expecting more inputs at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+						
+			    current1 -> ac -> mag = invalid_number_checker(temp);
+			    
+			    if(current1 -> ac -> mag < 0) {
+				printf("Magnitude must be greater than -1 at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			    
+			    temp = strtok(NULL, "\t ");
+				
+			    if(temp == NULL || temp[0] == 13 || temp[0] == 10) {
+				printf("Expecting more inputs at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+				
+			    current1 -> ac -> phase = invalid_number_checker(temp);
+			    
+			    temp = strtok(NULL, "\t \n");	
+			    
+			    if(temp != NULL && temp[0] != 13) {
+				printf("Too many inputs at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			}
 		    }
 		    else {
 			printf("Cannot parse line %d.\n", counter);
 			printf("Terminating.\n");
 			exit(-1);
 		    }
- 
 		}
 	
 	      
@@ -485,10 +1065,12 @@ void parseInput(FILE *p_file) {
 		
 		if(current1 -> positive_terminal) {
 		    non_zeroes_G += 2;
+		    non_zeroes_Gcomplex += 2;
 		}
 		
 		if(current1 -> negative_terminal) {
 		    non_zeroes_G += 2;
+		    non_zeroes_Gcomplex += 2;
 		}
 		
 		break;
@@ -497,7 +1079,7 @@ void parseInput(FILE *p_file) {
 	    case 'i':
 	    case 'I':
 	    
-		current1 = (struct twoTerminalsElement*) malloc(sizeof(struct twoTerminalsElement));
+		current1 = (twoTerminalsElement*) malloc(sizeof(twoTerminalsElement));
 		
 		if(current1 == NULL) {
 		    printf("Could not allocate new node.\n");
@@ -529,7 +1111,7 @@ void parseInput(FILE *p_file) {
 	            exit(-1);
 		}
 	 	      
-		current1 -> positive_terminal = hash(temp);
+		current1 -> positive_terminal = insert_node(temp);
 		
 		temp = strtok(NULL, "\t ");
 		
@@ -539,7 +1121,7 @@ void parseInput(FILE *p_file) {
 	            exit(-1);
 		}
 	      	      
-		current1 -> negative_terminal = hash(temp);	
+		current1 -> negative_terminal = insert_node(temp);	
 		
 		temp = strtok(NULL, "\t \n");
 		
@@ -549,17 +1131,439 @@ void parseInput(FILE *p_file) {
 	            exit(-1);
 		}
 	      
-		current1 -> value = atof(temp);
-		
+		current1 -> value = invalid_number_checker(temp);
 		
 		temp = strtok(NULL, "\t \n(,");
 		
 		if(temp == NULL || temp[0] == 13) {
-		    current1 -> transient  = NULL;
+		    current1 -> transient = NULL;
+		    current1 -> ac = NULL;
+		}
+		else if(!strcasecmp(temp, "AC")) {
+		    current1 -> ac = (acComponent*) malloc(sizeof(acComponent));
+		    
+		    if(current1 -> ac == NULL) {
+			printf("Could not allocate new node.\n");
+			printf("Terminating.\n");
+			exit(-1);
+		    }
+		    
+		    temp = strtok(NULL, "\t ");
+			
+		    if(temp == NULL || temp[0] == 13 || temp[0] == 10) {
+		        printf("Expecting more inputs at line %d.\n", counter);
+		        printf("Terminating.\n");
+		        exit(-1);
+		    }
+		       			
+		    current1 -> ac -> mag = invalid_number_checker(temp);
+		    
+		    if(current1 -> ac -> mag < 0) {
+		        printf("Magnitude must be greater than -1 at line %d.\n", counter);
+		        printf("Terminating.\n");
+		        exit(-1);
+		    }
+		    
+		    temp = strtok(NULL, "\t ");
+			
+		    if(temp == NULL || temp[0] == 13 || temp[0] == 10) {
+	                printf("Expecting more inputs at line %d.\n", counter);
+		        printf("Terminating.\n");
+		        exit(-1);
+		    }
+			
+		    current1 -> ac -> phase = invalid_number_checker(temp);
+		    
+		    temp = strtok(NULL, "\t \n(,");	
+
+		    if(temp == NULL || temp[0] == 13) {
+		        current1 -> transient = NULL;
+		    }
+		    else {
+		      
+			current1 -> transient = (transientComponent*) malloc(sizeof(transientComponent));
+			
+			if(current1 -> transient == NULL) {
+			    printf("Could not allocate new node.\n");
+			    printf("Terminating.\n");
+			    exit(-1);
+			}
+			
+			if(!strcasecmp(temp, "EXP")) {
+			    current1 -> transient -> impulse = EXP;
+			    
+			    current1 -> transient -> exp = (ExpImpulse*) malloc(sizeof(ExpImpulse));
+			    current1 -> transient -> sin = NULL;
+			    current1 -> transient -> pulse = NULL;
+			    current1 -> transient -> pwl = NULL;
+			    
+			    if(current1 -> transient -> exp == NULL) {
+				printf("Could not allocate new node.\n");
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			    
+			    temp = strtok(NULL, "\t (),");
+			    
+			    if(temp == NULL || temp[0] == 13 || temp[0] == 10) {
+				printf("Expecting more inputs at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			    
+			    current1 -> transient -> exp -> i1 = invalid_number_checker(temp);
+			    
+			    if(fabs(current1 -> value - current1 -> transient -> exp -> i1) > ZERO) {
+				printf("The first argument of exp and value must be the same, at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			    
+			    temp = strtok(NULL, "\t ),");
+			    
+			    if(temp == NULL || temp[0] == 13 || temp[0] == 10) {
+				printf("Expecting more inputs at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			    
+			    current1 -> transient -> exp -> i2 = invalid_number_checker(temp);
+			    
+			    temp = strtok(NULL, "\t ),");
+			    
+			    if(temp == NULL || temp[0] == 13 || temp[0] == 10) {
+				printf("Expecting more inputs at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			    
+			    current1 -> transient -> exp -> td1 = invalid_number_checker(temp);
+			    
+			    temp = strtok(NULL, "\t ),");
+			    
+			    if(temp == NULL || temp[0] == 13 || temp[0] == 10) {
+				printf("Expecting more inputs at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			    
+			    current1 -> transient -> exp -> tc1 = invalid_number_checker(temp);
+			    
+			    temp = strtok(NULL, "\t ),");
+			    
+			    if(temp == NULL || temp[0] == 13 || temp[0] == 10) {
+				printf("Expecting more inputs at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+		    
+			    current1 -> transient -> exp -> td2 = invalid_number_checker(temp);
+			    
+			    temp = strtok(NULL, "\t ),");
+			    
+			    if(temp == NULL || temp[0] == 13 || temp[0] == 10) {
+				printf("Expecting more inputs at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			    
+			    current1 -> transient -> exp -> tc2 = invalid_number_checker(temp);
+			    
+			    current1 -> transient -> vals = NULL;
+			    
+					    
+			    temp = strtok(NULL, "\t \n),");
+	    
+			
+			    if(temp != NULL && temp[0] != 13) {
+				printf("Too many inputs at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }			   
+			}
+			else if(!strcasecmp(temp, "SIN")) {
+			    current1 -> transient -> impulse = SIN;
+			    
+			    current1 -> transient -> exp = NULL;
+			    current1 -> transient -> sin = (SinImpulse*) malloc(sizeof(SinImpulse));
+			    current1 -> transient -> pulse = NULL;
+			    current1 -> transient -> pwl = NULL;
+			    
+			    if(current1 -> transient -> sin == NULL) {
+				printf("Could not allocate new node.\n");
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			    
+			    temp = strtok(NULL, "\t (),");
+			    
+			    if(temp == NULL || temp[0] == 13 || temp[0] == 10) {
+				printf("Expecting more inputs at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			    
+			    current1 -> transient -> sin -> i1 = invalid_number_checker(temp);
+			    
+			    if(fabs(current1 -> value - current1 -> transient -> sin -> i1) > ZERO) {
+				printf("The first argument of sin and value must be the same, at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			    
+			    temp = strtok(NULL, "\t ),");
+			    
+			    if(temp == NULL || temp[0] == 13 || temp[0] == 10) {
+				printf("Expecting more inputs at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			    
+			    current1 -> transient -> sin -> ia = invalid_number_checker(temp);
+			    
+			    temp = strtok(NULL, "\t ),");
+			    
+			    if(temp == NULL || temp[0] == 13 || temp[0] == 10) {
+				printf("Expecting more inputs at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			    
+			    current1 -> transient -> sin -> fr = invalid_number_checker(temp);
+			    
+			    temp = strtok(NULL, "\t ),");
+			    
+			    if(temp == NULL || temp[0] == 13 || temp[0] == 10) {
+				printf("Expecting more inputs at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			    
+			    current1 -> transient -> sin -> td = invalid_number_checker(temp);
+			    
+			    temp = strtok(NULL, "\t ),");
+			    
+			    if(temp == NULL || temp[0] == 13 || temp[0] == 10) {
+				printf("Expecting more inputs at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+		    
+			    current1 -> transient -> sin -> df = invalid_number_checker(temp);
+			    
+			    temp = strtok(NULL, "\t ),");
+			    
+			    if(temp == NULL || temp[0] == 13 || temp[0] == 10) {
+				printf("Expecting more inputs at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			    
+			    current1 -> transient -> sin -> ph = invalid_number_checker(temp);
+			    
+			    current1 -> transient -> vals = NULL;
+			    
+					    
+			    temp = strtok(NULL, "\t \n),");
+	    
+			
+			    if(temp != NULL && temp[0] != 13) {
+				printf("Too many inputs at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			}
+			else if(!strcasecmp(temp, "PULSE")) {
+			    current1 -> transient -> impulse = PULSE;
+			    
+			    current1 -> transient -> exp = NULL;
+			    current1 -> transient -> sin = NULL;
+			    current1 -> transient -> pulse = (PulseImpulse*) malloc(sizeof(PulseImpulse));
+			    current1 -> transient -> pwl = NULL;
+			    
+			    if(current1 -> transient -> pulse == NULL) {
+				printf("Could not allocate new node.\n");
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			    
+			    temp = strtok(NULL, "\t (),");
+			    
+			    if(temp == NULL || temp[0] == 13 || temp[0] == 10) {
+				printf("Expecting more inputs at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			    
+			    current1 -> transient -> pulse -> i1 = invalid_number_checker(temp);
+			    
+			    if(fabs(current1 -> value - current1 -> transient -> pulse -> i1) > ZERO) {
+				printf("The first argument of pulse and value must be the same, at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			    
+			    temp = strtok(NULL, "\t ),");
+			    
+			    if(temp == NULL || temp[0] == 13 || temp[0] == 10) {
+				printf("Expecting more inputs at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			    
+			    current1 -> transient -> pulse -> i2 = invalid_number_checker(temp);
+			    
+			    temp = strtok(NULL, "\t ),");
+			    
+			    if(temp == NULL || temp[0] == 13 || temp[0] == 10) {
+				printf("Expecting more inputs at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			    
+			    current1 -> transient -> pulse -> td = invalid_number_checker(temp);
+			    
+			    temp = strtok(NULL, "\t ),");
+			    
+			    if(temp == NULL || temp[0] == 13 || temp[0] == 10) {
+				printf("Expecting more inputs at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			    
+			    current1 -> transient -> pulse -> tr = invalid_number_checker(temp);
+			    
+			    temp = strtok(NULL, "\t ),");
+			    
+			    if(temp == NULL || temp[0] == 13 || temp[0] == 10) {
+				printf("Expecting more inputs at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+		    
+			    current1 -> transient -> pulse -> tf = invalid_number_checker(temp);
+			    
+			    temp = strtok(NULL, "\t ),");
+			    
+			    if(temp == NULL || temp[0] == 13 || temp[0] == 10) {
+				printf("Expecting more inputs at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			    
+			    current1 -> transient -> pulse -> pw = invalid_number_checker(temp);
+			    
+			    temp = strtok(NULL, "\t ),");
+			    
+			    if(temp == NULL || temp[0] == 13 || temp[0] == 10) {
+				printf("Expecting more inputs at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			    
+			    current1 -> transient -> pulse -> per = invalid_number_checker(temp);
+			    
+			    current1 -> transient -> vals = NULL;
+					    
+			    temp = strtok(NULL, "\t \n),");
+	    
+			
+			    if(temp != NULL && temp[0] != 13) {
+				printf("Too many inputs at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			}
+			else if(!strcasecmp(temp, "PWL")) {
+			    current1 -> transient -> impulse = PWL;
+			    
+			    current1 -> transient -> exp = NULL;
+			    current1 -> transient -> sin = NULL;
+			    current1 -> transient -> pulse = NULL;
+			    current1 -> transient -> pwl = (PWLImpulse*) malloc(sizeof(PWLImpulse));
+			    
+			    if(current1 -> transient -> pwl == NULL) {
+				printf("Could not allocate new node.\n");
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			    
+			    j = 0;
+			    current1 -> transient -> pwl -> length = 0;
+			    
+			    current1 -> transient -> pwl -> t = (double *) malloc((j + 1) * sizeof(double));
+			    current1 -> transient -> pwl -> i = (double *) malloc((j + 1) * sizeof(double));
+			    
+			    if(current1 -> transient -> pwl -> t == NULL || current1 -> transient -> pwl -> i == NULL) {
+				printf("Could not allocate matrices.\n");
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			    
+			    temp = strtok(NULL, "\t (),");
+			    
+			    do {
+			    
+				current1 -> transient -> pwl -> t = realloc(current1 -> transient -> pwl -> t, (j + 1) * sizeof(double));
+				current1 -> transient -> pwl -> i = realloc(current1 -> transient -> pwl -> i, (j + 1) * sizeof(double));
+				
+				if(current1 -> transient -> pwl -> t == NULL || current1 -> transient -> pwl -> i == NULL) {
+				    printf("Could not allocate matrices.\n");
+				    printf("Terminating.\n");
+				    exit(-1);
+				}
+				
+				if(temp == NULL || temp[0] == 13 || temp[0] == 10) {
+				    printf("Expecting more inputs at line %d.\n", counter);
+				    printf("Terminating.\n");
+				    exit(-1);
+				}
+				
+				current1 -> transient -> pwl -> t[j] = invalid_number_checker(temp);
+				
+				temp = strtok(NULL, "\t ),");
+				
+				if(temp == NULL || temp[0] == 13 || temp[0] == 10) {
+				    printf("Expecting more inputs at line %d.\n", counter);
+				    printf("Terminating.\n");
+				    exit(-1);
+				}
+				
+				current1 -> transient -> pwl -> i[j] = invalid_number_checker(temp);
+							
+				j++;
+				
+				current1 -> transient -> pwl -> length++;
+				
+				temp = strtok(NULL, "\t (),");
+				
+			    } while(temp != NULL && temp[0] != 13 && temp[0] != 10);
+			    
+			    current1 -> transient -> pwl -> t[0] = 0;
+			    
+			    if(current1 -> transient -> pwl -> length < 2) {
+				printf("The inputs for the piece wise linear need to be at least 2, at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			    
+			    if(fabs(current1 -> value - current1 -> transient -> pwl -> i[0]) > ZERO) {
+				printf("The first argument of pwl and value must be the same, at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			}
+			else {
+			    printf("Cannot parse line %d.\n", counter);
+			    printf("Terminating.\n");
+			    exit(-1);
+			}
+    
+		    }
 		}
 		else {
 		  
-		    current1 -> transient = (struct transientComponent*) malloc(sizeof(struct transientComponent));
+		    current1 -> transient = (transientComponent*) malloc(sizeof(transientComponent));
 		    
 		    if(current1 -> transient == NULL) {
 			printf("Could not allocate new node.\n");
@@ -570,7 +1574,7 @@ void parseInput(FILE *p_file) {
 		    if(!strcasecmp(temp, "EXP")) {
 			current1 -> transient -> impulse = EXP;
 			
-			current1 -> transient -> exp = (struct ExpImpulse*) malloc(sizeof(struct ExpImpulse));
+			current1 -> transient -> exp = (ExpImpulse*) malloc(sizeof(ExpImpulse));
 			current1 -> transient -> sin = NULL;
 			current1 -> transient -> pulse = NULL;
 			current1 -> transient -> pwl = NULL;
@@ -589,7 +1593,7 @@ void parseInput(FILE *p_file) {
 			    exit(-1);
 		        }
 			
-			current1 -> transient -> exp -> i1 = atof(temp);
+			current1 -> transient -> exp -> i1 = invalid_number_checker(temp);
 			
 			if(fabs(current1 -> value - current1 -> transient -> exp -> i1) > ZERO) {
 			    printf("The first argument of exp and value must be the same, at line %d.\n", counter);
@@ -605,7 +1609,7 @@ void parseInput(FILE *p_file) {
 			    exit(-1);
 		        }
 			
-			current1 -> transient -> exp -> i2 = atof(temp);
+			current1 -> transient -> exp -> i2 = invalid_number_checker(temp);
 			
 			temp = strtok(NULL, "\t ),");
 			
@@ -615,7 +1619,7 @@ void parseInput(FILE *p_file) {
 			    exit(-1);
 		        }
 			
-			current1 -> transient -> exp -> td1 = atof(temp);
+			current1 -> transient -> exp -> td1 = invalid_number_checker(temp);
 			
 			temp = strtok(NULL, "\t ),");
 			
@@ -625,7 +1629,7 @@ void parseInput(FILE *p_file) {
 			    exit(-1);
 		        }
 			
-			current1 -> transient -> exp -> tc1 = atof(temp);
+			current1 -> transient -> exp -> tc1 = invalid_number_checker(temp);
 			
 			temp = strtok(NULL, "\t ),");
 			
@@ -635,7 +1639,7 @@ void parseInput(FILE *p_file) {
 			    exit(-1);
 		        }
 		
-			current1 -> transient -> exp -> td2 = atof(temp);
+			current1 -> transient -> exp -> td2 = invalid_number_checker(temp);
 			
 			temp = strtok(NULL, "\t ),");
 			
@@ -645,26 +1649,65 @@ void parseInput(FILE *p_file) {
 			    exit(-1);
 		        }
 			
-			current1 -> transient -> exp -> tc2 = atof(temp);
+			current1 -> transient -> exp -> tc2 = invalid_number_checker(temp);
 			
 			current1 -> transient -> vals = NULL;
 			
 					
 			temp = strtok(NULL, "\t \n),");
 	
-		    
-			if(temp != NULL && temp[0] != 13) {
-			    printf("Too many inputs at line %d.\n", counter);
-			    printf("Terminating.\n");
-			    exit(-1);
+			if(temp == NULL || temp[0] == 13) {
+		            current1 -> ac = NULL;
+		        }		
+			else if(!strcasecmp(temp, "AC")) {
+			    current1 -> ac = (acComponent*) malloc(sizeof(acComponent));
+			    
+			    if(current1 -> ac == NULL) {
+				printf("Could not allocate new node.\n");
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			    
+			    temp = strtok(NULL, "\t ");
+				
+			    if(temp == NULL || temp[0] == 13 || temp[0] == 10) {
+				printf("Expecting more inputs at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+						
+			    current1 -> ac -> mag = invalid_number_checker(temp);
+			    
+			    if(current1 -> ac -> mag < 0) {
+				printf("Magnitude must be greater than -1 at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			    
+			    temp = strtok(NULL, "\t ");
+				
+			    if(temp == NULL || temp[0] == 13 || temp[0] == 10) {
+				printf("Expecting more inputs at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+				
+			    current1 -> ac -> phase = invalid_number_checker(temp);
+			    
+			    temp = strtok(NULL, "\t \n");	
+			    
+			    if(temp != NULL && temp[0] != 13) {
+				printf("Too many inputs at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
 			}
-
 		    }
 		    else if(!strcasecmp(temp, "SIN")) {
 			current1 -> transient -> impulse = SIN;
 			
 			current1 -> transient -> exp = NULL;
-			current1 -> transient -> sin = (struct SinImpulse*) malloc(sizeof(struct SinImpulse));
+			current1 -> transient -> sin = (SinImpulse*) malloc(sizeof(SinImpulse));
 			current1 -> transient -> pulse = NULL;
 			current1 -> transient -> pwl = NULL;
 			
@@ -682,7 +1725,7 @@ void parseInput(FILE *p_file) {
 			    exit(-1);
 		        }
 			
-			current1 -> transient -> sin -> i1 = atof(temp);
+			current1 -> transient -> sin -> i1 = invalid_number_checker(temp);
 			
 			if(fabs(current1 -> value - current1 -> transient -> sin -> i1) > ZERO) {
 			    printf("The first argument of sin and value must be the same, at line %d.\n", counter);
@@ -698,7 +1741,7 @@ void parseInput(FILE *p_file) {
 			    exit(-1);
 		        }
 			
-			current1 -> transient -> sin -> ia = atof(temp);
+			current1 -> transient -> sin -> ia = invalid_number_checker(temp);
 			
 			temp = strtok(NULL, "\t ),");
 			
@@ -708,7 +1751,7 @@ void parseInput(FILE *p_file) {
 			    exit(-1);
 		        }
 			
-			current1 -> transient -> sin -> fr = atof(temp);
+			current1 -> transient -> sin -> fr = invalid_number_checker(temp);
 			
 			temp = strtok(NULL, "\t ),");
 			
@@ -718,7 +1761,7 @@ void parseInput(FILE *p_file) {
 			    exit(-1);
 		        }
 			
-			current1 -> transient -> sin -> td = atof(temp);
+			current1 -> transient -> sin -> td = invalid_number_checker(temp);
 			
 			temp = strtok(NULL, "\t ),");
 			
@@ -728,7 +1771,7 @@ void parseInput(FILE *p_file) {
 			    exit(-1);
 		        }
 		
-			current1 -> transient -> sin -> df = atof(temp);
+			current1 -> transient -> sin -> df = invalid_number_checker(temp);
 			
 			temp = strtok(NULL, "\t ),");
 			
@@ -738,27 +1781,66 @@ void parseInput(FILE *p_file) {
 			    exit(-1);
 		        }
 			
-			current1 -> transient -> sin -> ph = atof(temp);
+			current1 -> transient -> sin -> ph = invalid_number_checker(temp);
 			
 			current1 -> transient -> vals = NULL;
 			
 					
 			temp = strtok(NULL, "\t \n),");
 	
-		    
-			if(temp != NULL && temp[0] != 13) {
-			    printf("Too many inputs at line %d.\n", counter);
-			    printf("Terminating.\n");
-			    exit(-1);
+			if(temp == NULL || temp[0] == 13) {
+		            current1 -> ac = NULL;
+		        }		
+			else if(!strcasecmp(temp, "AC")) {
+			    current1 -> ac = (acComponent*) malloc(sizeof(acComponent));
+			    
+			    if(current1 -> ac == NULL) {
+				printf("Could not allocate new node.\n");
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			    
+			    temp = strtok(NULL, "\t ");
+				
+			    if(temp == NULL || temp[0] == 13 || temp[0] == 10) {
+				printf("Expecting more inputs at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+						
+			    current1 -> ac -> mag = invalid_number_checker(temp);
+			    
+			    if(current1 -> ac -> mag < 0) {
+				printf("Magnitude must be greater than -1 at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			    
+			    temp = strtok(NULL, "\t ");
+				
+			    if(temp == NULL || temp[0] == 13 || temp[0] == 10) {
+				printf("Expecting more inputs at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+				
+			    current1 -> ac -> phase = invalid_number_checker(temp);
+			    
+			    temp = strtok(NULL, "\t \n");	
+			    
+			    if(temp != NULL && temp[0] != 13) {
+				printf("Too many inputs at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
 			}
-		    
 		    }
 		    else if(!strcasecmp(temp, "PULSE")) {
 			current1 -> transient -> impulse = PULSE;
 			
 			current1 -> transient -> exp = NULL;
 			current1 -> transient -> sin = NULL;
-			current1 -> transient -> pulse = (struct PulseImpulse*) malloc(sizeof(struct PulseImpulse));
+			current1 -> transient -> pulse = (PulseImpulse*) malloc(sizeof(PulseImpulse));
 			current1 -> transient -> pwl = NULL;
 			
 			if(current1 -> transient -> pulse == NULL) {
@@ -775,7 +1857,7 @@ void parseInput(FILE *p_file) {
 			    exit(-1);
 		        }
 			
-			current1 -> transient -> pulse -> i1 = atof(temp);
+			current1 -> transient -> pulse -> i1 = invalid_number_checker(temp);
 			
 			if(fabs(current1 -> value - current1 -> transient -> pulse -> i1) > ZERO) {
 			    printf("The first argument of pulse and value must be the same, at line %d.\n", counter);
@@ -791,7 +1873,7 @@ void parseInput(FILE *p_file) {
 			    exit(-1);
 		        }
 			
-			current1 -> transient -> pulse -> i2 = atof(temp);
+			current1 -> transient -> pulse -> i2 = invalid_number_checker(temp);
 			
 			temp = strtok(NULL, "\t ),");
 			
@@ -801,7 +1883,7 @@ void parseInput(FILE *p_file) {
 			    exit(-1);
 		        }
 			
-			current1 -> transient -> pulse -> td = atof(temp);
+			current1 -> transient -> pulse -> td = invalid_number_checker(temp);
 			
 			temp = strtok(NULL, "\t ),");
 			
@@ -811,7 +1893,7 @@ void parseInput(FILE *p_file) {
 			    exit(-1);
 		        }
 			
-			current1 -> transient -> pulse -> tr = atof(temp);
+			current1 -> transient -> pulse -> tr = invalid_number_checker(temp);
 			
 			temp = strtok(NULL, "\t ),");
 			
@@ -821,7 +1903,7 @@ void parseInput(FILE *p_file) {
 			    exit(-1);
 		        }
 		
-			current1 -> transient -> pulse -> tf = atof(temp);
+			current1 -> transient -> pulse -> tf = invalid_number_checker(temp);
 			
 			temp = strtok(NULL, "\t ),");
 			
@@ -831,7 +1913,7 @@ void parseInput(FILE *p_file) {
 			    exit(-1);
 		        }
 			
-			current1 -> transient -> pulse -> pw = atof(temp);
+			current1 -> transient -> pulse -> pw = invalid_number_checker(temp);
 			
 			temp = strtok(NULL, "\t ),");
 			
@@ -841,19 +1923,58 @@ void parseInput(FILE *p_file) {
 			    exit(-1);
 		        }
 			
-			current1 -> transient -> pulse -> per = atof(temp);
+			current1 -> transient -> pulse -> per = invalid_number_checker(temp);
 			
 			current1 -> transient -> vals = NULL;
 					
 			temp = strtok(NULL, "\t \n),");
 	
-		    
-			if(temp != NULL && temp[0] != 13) {
-			    printf("Too many inputs at line %d.\n", counter);
-			    printf("Terminating.\n");
-			    exit(-1);
+			if(temp == NULL || temp[0] == 13) {
+		            current1 -> ac = NULL;
+		        }		
+			else if(!strcasecmp(temp, "AC")) {
+			    current1 -> ac = (acComponent*) malloc(sizeof(acComponent));
+			    
+			    if(current1 -> ac == NULL) {
+				printf("Could not allocate new node.\n");
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			    
+			    temp = strtok(NULL, "\t ");
+				
+			    if(temp == NULL || temp[0] == 13 || temp[0] == 10) {
+				printf("Expecting more inputs at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+						
+			    current1 -> ac -> mag = invalid_number_checker(temp);
+			    
+			    if(current1 -> ac -> mag < 0) {
+				printf("Magnitude must be greater than -1 at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			    
+			    temp = strtok(NULL, "\t ");
+				
+			    if(temp == NULL || temp[0] == 13 || temp[0] == 10) {
+				printf("Expecting more inputs at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+				
+			    current1 -> ac -> phase = invalid_number_checker(temp);
+			    
+			    temp = strtok(NULL, "\t \n");	
+			    
+			    if(temp != NULL && temp[0] != 13) {
+				printf("Too many inputs at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
 			}
-		    
 		    }
 		    else if(!strcasecmp(temp, "PWL")) {
 			current1 -> transient -> impulse = PWL;
@@ -861,7 +1982,7 @@ void parseInput(FILE *p_file) {
 			current1 -> transient -> exp = NULL;
 			current1 -> transient -> sin = NULL;
 			current1 -> transient -> pulse = NULL;
-			current1 -> transient -> pwl = (struct PWLImpulse*) malloc(sizeof(struct PWLImpulse));
+			current1 -> transient -> pwl = (PWLImpulse*) malloc(sizeof(PWLImpulse));
 			
 			if(current1 -> transient -> pwl == NULL) {
 			    printf("Could not allocate new node.\n");
@@ -884,6 +2005,10 @@ void parseInput(FILE *p_file) {
 			temp = strtok(NULL, "\t (),");
 			
 			do {
+			  
+			    if(!strcasecmp(temp, "AC")) {
+			        break;
+			    }
 			
 			    current1 -> transient -> pwl -> t = realloc(current1 -> transient -> pwl -> t, (j + 1) * sizeof(double));
 			    current1 -> transient -> pwl -> i = realloc(current1 -> transient -> pwl -> i, (j + 1) * sizeof(double));
@@ -900,7 +2025,7 @@ void parseInput(FILE *p_file) {
 				exit(-1);
 			    }
 			    
-			    current1 -> transient -> pwl -> t[j] = atof(temp);
+			    current1 -> transient -> pwl -> t[j] = invalid_number_checker(temp);
 			    
 			    temp = strtok(NULL, "\t ),");
 			    
@@ -910,7 +2035,7 @@ void parseInput(FILE *p_file) {
 				exit(-1);
 			    }
 			    
-			    current1 -> transient -> pwl -> i[j] = atof(temp);
+			    current1 -> transient -> pwl -> i[j] = invalid_number_checker(temp);
 			    			    
 			    j++;
 			    
@@ -933,7 +2058,50 @@ void parseInput(FILE *p_file) {
 			    printf("Terminating.\n");
 			    exit(-1);
 			}
-
+			
+			if(!strcasecmp(temp, "AC")) {
+			    current1 -> ac = (acComponent*) malloc(sizeof(acComponent));
+			    
+			    if(current1 -> ac == NULL) {
+				printf("Could not allocate new node.\n");
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			    
+			    temp = strtok(NULL, "\t ");
+				
+			    if(temp == NULL || temp[0] == 13 || temp[0] == 10) {
+				printf("Expecting more inputs at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+						
+			    current1 -> ac -> mag = invalid_number_checker(temp);
+			    
+			    if(current1 -> ac -> mag < 0) {
+				printf("Magnitude must be greater than -1 at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			    
+			    temp = strtok(NULL, "\t ");
+				
+			    if(temp == NULL || temp[0] == 13 || temp[0] == 10) {
+				printf("Expecting more inputs at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+				
+			    current1 -> ac -> phase = invalid_number_checker(temp);
+			    
+			    temp = strtok(NULL, "\t \n");	
+			    
+			    if(temp != NULL && temp[0] != 13) {
+				printf("Too many inputs at line %d.\n", counter);
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			}
 		    }
 		    else {
 			printf("Cannot parse line %d.\n", counter);
@@ -953,7 +2121,7 @@ void parseInput(FILE *p_file) {
 	    case 'r':
 	    case 'R':
 	    
-		current1 = (struct twoTerminalsElement*) malloc(sizeof(struct twoTerminalsElement));
+		current1 = (twoTerminalsElement*) malloc(sizeof(twoTerminalsElement));
 		
 		if(current1 == NULL) {
 		    printf("Could not allocate new node.\n");
@@ -985,7 +2153,7 @@ void parseInput(FILE *p_file) {
 	            exit(-1);
 		}
 	 	      
-		current1 -> positive_terminal = hash(temp);
+		current1 -> positive_terminal = insert_node(temp);
 		
 		temp = strtok(NULL, "\t ");
 		
@@ -995,7 +2163,7 @@ void parseInput(FILE *p_file) {
 	            exit(-1);
 		}
 	      	      
-		current1 -> negative_terminal = hash(temp);	
+		current1 -> negative_terminal = insert_node(temp);	
 		
 		temp = strtok(NULL, "\t \n");
 		
@@ -1005,7 +2173,7 @@ void parseInput(FILE *p_file) {
 	            exit(-1);
 		}
 	      
-		current1 -> value = atof(temp);
+		current1 -> value = invalid_number_checker(temp);
 		
 		temp = strtok(NULL, "\t \n");
 		
@@ -1017,6 +2185,8 @@ void parseInput(FILE *p_file) {
 		
 		
 		current1 -> transient = NULL;
+		
+		current1 -> ac = NULL;
 	      
 		current1 -> next = NULL;
 		
@@ -1024,14 +2194,17 @@ void parseInput(FILE *p_file) {
 		
 		if(current1 -> positive_terminal) {
 	            non_zeroes_G++;
+		    non_zeroes_Gcomplex++;
 		}
 		
 		if(current1 -> negative_terminal) {
 		    non_zeroes_G++;
+		    non_zeroes_Gcomplex++;
 		}
 		
 		if(current1 -> positive_terminal && current1 -> negative_terminal) {
 		    non_zeroes_G += 2;
+		    non_zeroes_Gcomplex += 2;
 		}
 		
 		break;
@@ -1040,7 +2213,7 @@ void parseInput(FILE *p_file) {
 	    case 'c':
 	    case 'C':
 	    
-		current1 = (struct twoTerminalsElement*) malloc(sizeof(struct twoTerminalsElement));
+		current1 = (twoTerminalsElement*) malloc(sizeof(twoTerminalsElement));
 		
 		if(current1 == NULL) {
 		    printf("Could not allocate new node.\n");
@@ -1072,7 +2245,7 @@ void parseInput(FILE *p_file) {
 	            exit(-1);
 		}
 	 	      
-		current1 -> positive_terminal = hash(temp);
+		current1 -> positive_terminal = insert_node(temp);
 		
 		temp = strtok(NULL, "\t ");
 		
@@ -1082,7 +2255,7 @@ void parseInput(FILE *p_file) {
 	            exit(-1);
 		}
 	      	      
-		current1 -> negative_terminal = hash(temp);	
+		current1 -> negative_terminal = insert_node(temp);	
 		
 		temp = strtok(NULL, "\t \n");
 		
@@ -1092,8 +2265,8 @@ void parseInput(FILE *p_file) {
 	            exit(-1);
 		}
 	      
-		current1 -> value = atof(temp);
-		
+		current1 -> value = invalid_number_checker(temp);
+
 		temp = strtok(NULL, "\t \n");
 		
 		if(temp != NULL && temp[0] != 13) {
@@ -1103,6 +2276,8 @@ void parseInput(FILE *p_file) {
 		}
 		
 		current1 -> transient = NULL;
+		
+		current1 -> ac = NULL;
 	      
 		current1 -> next = NULL;
 		
@@ -1110,14 +2285,17 @@ void parseInput(FILE *p_file) {
 		
 		if(current1 -> positive_terminal) {
 	            non_zeroes_C++;
+		    non_zeroes_Gcomplex++;
 		}
 		
 		if(current1 -> negative_terminal) {
 		    non_zeroes_C++;
+		    non_zeroes_Gcomplex++;
 		}
 		
 		if(current1 -> positive_terminal && current1 -> negative_terminal) {
 		    non_zeroes_C += 2;
+		    non_zeroes_Gcomplex += 2;
 		}
 		
 		break;
@@ -1126,7 +2304,7 @@ void parseInput(FILE *p_file) {
 	    case 'l':
 	    case 'L':
 	    
-		current1 = (struct twoTerminalsElement*) malloc(sizeof(struct twoTerminalsElement));
+		current1 = (twoTerminalsElement*) malloc(sizeof(twoTerminalsElement));
 		
 		if(current1 == NULL) {
 		    printf("Could not allocate new node.\n");
@@ -1158,7 +2336,7 @@ void parseInput(FILE *p_file) {
 	            exit(-1);
 		}
 	 	      
-		current1 -> positive_terminal = hash(temp);
+		current1 -> positive_terminal = insert_node(temp);
 		
 		temp = strtok(NULL, "\t ");
 		
@@ -1168,7 +2346,7 @@ void parseInput(FILE *p_file) {
 	            exit(-1);
 		}
 	      	      
-		current1 -> negative_terminal = hash(temp);	
+		current1 -> negative_terminal = insert_node(temp);	
 		
 		temp = strtok(NULL, "\t \n");
 		
@@ -1178,7 +2356,7 @@ void parseInput(FILE *p_file) {
 	            exit(-1);
 		}
 	      
-		current1 -> value = atof(temp);
+		current1 -> value = invalid_number_checker(temp);
 		
 		temp = strtok(NULL, "\t \n");
 		
@@ -1189,6 +2367,8 @@ void parseInput(FILE *p_file) {
 		}
 		
 		current1 -> transient = NULL;
+		
+		current1 -> ac = NULL;
 	      
 		current1 -> next = NULL;
 		
@@ -1196,13 +2376,18 @@ void parseInput(FILE *p_file) {
 		
 		if(current1 -> positive_terminal) {
 		    non_zeroes_G += 2;
+		    non_zeroes_Gcomplex += 2;
 		}
 		
 		if(current1 -> negative_terminal) {
 		    non_zeroes_G += 2;
+		    non_zeroes_Gcomplex += 2;
 		}
 		
-		non_zeroes_C++;
+		if(current1 -> negative_terminal || current1 -> positive_terminal) {
+		    non_zeroes_C++;
+		    non_zeroes_Gcomplex++;
+		}
 		
 		break;
 		
@@ -1210,7 +2395,7 @@ void parseInput(FILE *p_file) {
 	    case 'd':
 	    case 'D':
 	    
-		current1 = (struct twoTerminalsElement*) malloc(sizeof(struct twoTerminalsElement));
+		current1 = (twoTerminalsElement*) malloc(sizeof(twoTerminalsElement));
 		
 		if(current1 == NULL) {
 		    printf("Could not allocate new node.\n");
@@ -1224,9 +2409,9 @@ void parseInput(FILE *p_file) {
 		
 		current1 -> name = ++number_of_elements[DIODE];
 	   	      
-		current1 -> positive_terminal = hash(strtok(NULL, "\t "));
+		current1 -> positive_terminal = insert_node(strtok(NULL, "\t "));
 	      
-		current1 -> negative_terminal = hash(strtok(NULL, "\t "));
+		current1 -> negative_terminal = insert_node(strtok(NULL, "\t "));
 		      
 		strtok(NULL, "\t ");  //MODEL NAME(ignored)	    
 	      
@@ -1236,10 +2421,12 @@ void parseInput(FILE *p_file) {
 		    current1 -> value = 1;
 		}
 		else {
-		    current1 -> value = atof(temp); 
+		    current1 -> value = invalid_number_checker(temp); 
 		}
 		
 		current1 -> transient = NULL;
+		
+		current1 -> ac = NULL;
 	      
 		current1 -> next = NULL;
 		
@@ -1251,7 +2438,7 @@ void parseInput(FILE *p_file) {
 	    case 'q':
 	    case 'Q':
 	      
-		current2 = (struct threeTerminalsElement*) malloc(sizeof(struct threeTerminalsElement));
+		current2 = (threeTerminalsElement*) malloc(sizeof(threeTerminalsElement));
 		
 		if(current2 == NULL) {
 		    printf("Could not allocate new node.\n");
@@ -1265,11 +2452,11 @@ void parseInput(FILE *p_file) {
 		
 		current2 -> name = ++number_of_elements[BJT];
 			      
-		current2 -> c_terminal = hash(strtok(NULL, "\t "));
+		current2 -> c_terminal = insert_node(strtok(NULL, "\t "));
 			      
-		current2 -> b_terminal = hash(strtok(NULL, "\t "));
+		current2 -> b_terminal = insert_node(strtok(NULL, "\t "));
 			      
-		current2 -> e_terminal = hash(strtok(NULL, "\t "));
+		current2 -> e_terminal = insert_node(strtok(NULL, "\t "));
 		
 		strtok(NULL, "\t ");  //MODEL NAME(ignored)
 		
@@ -1279,7 +2466,7 @@ void parseInput(FILE *p_file) {
 		    current2 -> value = 1;
 		}
 		else {
-		    current2 -> value = atof(temp); 
+		    current2 -> value = invalid_number_checker(temp); 
 		}
 	      
 		current2 -> next = NULL;
@@ -1292,7 +2479,7 @@ void parseInput(FILE *p_file) {
 	    case 'm':
 	    case 'M':
 	      
-		current3 = (struct fourTerminalsElement*) malloc(sizeof(struct fourTerminalsElement));
+		current3 = (fourTerminalsElement*) malloc(sizeof(fourTerminalsElement));
 		
 		if(current3 == NULL) {
 		    printf("Could not allocate new node.\n");
@@ -1306,19 +2493,19 @@ void parseInput(FILE *p_file) {
 		
 		current3 -> name = ++number_of_elements[MOS];
 	      
-		current3 -> d_terminal = hash(strtok(NULL, "\t "));
+		current3 -> d_terminal = insert_node(strtok(NULL, "\t "));
 	      
-		current3 -> g_terminal = hash(strtok(NULL, "\t "));
+		current3 -> g_terminal = insert_node(strtok(NULL, "\t "));
 	      
-		current3 -> s_terminal = hash(strtok(NULL, "\t "));
+		current3 -> s_terminal = insert_node(strtok(NULL, "\t "));
 	      
-		current3 -> b_terminal = hash(strtok(NULL, "\t "));
+		current3 -> b_terminal = insert_node(strtok(NULL, "\t "));
 		
 		strtok(NULL, "\t ");  //MODEL NAME(ignored)
 		
-		current3 -> length = atof(strtok(NULL, "\t lL="));
+		current3 -> length = invalid_number_checker(strtok(NULL, "\t lL="));
 		
-		current3 -> width = atof(strtok(NULL, "\t wW=\n"));
+		current3 -> width = invalid_number_checker(strtok(NULL, "\t wW=\n"));
 	      
 		current3 -> next = NULL;
 		
@@ -1362,11 +2549,11 @@ void parseInput(FILE *p_file) {
 			}
 			
 			if(!strcasecmp(temp, "SPD")) {
-			    matrix_type = SPD;
+			    circuit_simulation.matrix_type = SPD;
 			    printf("Options: Symmetric & Positive Matrices Activated.\n");
 			}
 			else if(!strcasecmp(temp, "ITER")) {
-			    method = ITERATIVE;
+			    circuit_simulation.method = ITERATIVE;
 			    printf("Options: Iterative Methods Activated.\n");
 			}
 			else if(!strcasecmp(temp, "ITOL")) {
@@ -1376,11 +2563,11 @@ void parseInput(FILE *p_file) {
 			        printf("Terminating.\n");
 			        exit(-1); 
 			    }
-			    itol = atof(temp);
-			    printf("Options: Iterative Threshold set to %.8e .\n", itol);
+			    circuit_simulation.iterative_methods.itol = invalid_number_checker(temp);
+			    printf("Options: Iterative Threshold set to %.8e .\n", circuit_simulation.iterative_methods.itol);
 			}
 			else if(!strcasecmp(temp, "SPARSE")) {
-			    matrix_sparsity = SPARSE;
+			    circuit_simulation.matrix_sparsity = SPARSE;
 			    printf("Options: Sparse Matrices Activated.\n");
 			}
 			else if(!strcasecmp(temp, "METHOD")) {
@@ -1398,14 +2585,18 @@ void parseInput(FILE *p_file) {
 			    }
 			
 			    if(!strcasecmp(temp, "TR")) {
-				diff_method = TRAPEZOIDAL;
+				circuit_simulation.transient_analysis_settings.diff_method = TRAPEZOIDAL;
 				printf("Options: Trapezoidal Method Activated.\n");
 			      
 			    }
 			    else if(!strcasecmp(temp, "BE")) {
-				diff_method = EULER;
+				circuit_simulation.transient_analysis_settings.diff_method = BACKWARD_EULER;
 				printf("Options: Backward Euler Method Activated.\n");
 			    }
+			    /*else if(!strcasecmp(temp, "FE")) {
+				circuit_simulation.transient_analysis_settings.diff_method = FORWARD_EULER;
+				printf("Options: Forward Euler Method Activated.\n");
+			    }*/
 			    else {
 				printf("Cannot parse line %d.\n", counter);
 			        printf("Terminating.\n");
@@ -1413,12 +2604,16 @@ void parseInput(FILE *p_file) {
 			    }
 			}
 			else if(!strcasecmp(temp, "GNUPLOTLP")) {
-			    gnuplot = LINES_POINTS;
+			    circuit_simulation.gnuplot = LINES_POINTS;
 			    printf("Options: GNU plot Activated (Lines and Points).\n");
 			}
 			else if(!strcasecmp(temp, "GNUPLOTL")) {
-			    gnuplot = LINES;
+			    circuit_simulation.gnuplot = LINES;
 			    printf("Options: GNU plot Activated (Lines).\n");
+			}
+			else if(!strcasecmp(temp, "GRAPH")) {
+			    circuit_simulation.dot_graph = DOT_GRAPH_ON;
+			    printf("Options: Dot graph Activated.\n");
 			}
 			else {
 			    printf("Cannot parse line %d.\n", counter);
@@ -1440,6 +2635,17 @@ void parseInput(FILE *p_file) {
 		        case 'V':
 		        case 'v':
 			    temp++;
+			    
+			    if(temp[0] == '\0') {
+			        temp = strtok(NULL, "\t ");
+			    }
+			    
+			    for(k = 0; k < strlen(temp); k++) {
+				if(temp[k] == 13) {
+				    temp[k] = '\0'; 
+				}
+			    }
+			    
 			    for(current1 = head_twoTerminalsElement_list; head_twoTerminalsElement_list != NULL && current1 != NULL; current1 = current1 -> next) {
 			        if(current1 -> type == VOLTAGE_SOURCE || current1 -> type == INDUCTOR) {
 				    temp_group2++;
@@ -1449,9 +2655,8 @@ void parseInput(FILE *p_file) {
 				}
 			    }
 			    
-			    
-			    dc_sweep_index1 = -1;
-                            dc_sweep_index2 = -1;
+			    circuit_simulation.dc_sweep_settings.dc_sweep_index1 = -1;
+                           circuit_simulation.dc_sweep_settings.dc_sweep_index2 = -1;
 			    
 			    if(current1 == NULL) {
 			        printf("\n\nThe element, V%s does not exist, at line %d.\n", temp, counter);
@@ -1459,8 +2664,8 @@ void parseInput(FILE *p_file) {
 		                exit(-1); 
 			    }
 			    
-			    dc_sweep = SWEEP_VOLTAGE_SOURCE;
-			    dc_sweep_index1 = temp_group2 - 1;
+			    circuit_simulation.dc_sweep_settings.dc_sweep = SWEEP_VOLTAGE_SOURCE;
+			    circuit_simulation.dc_sweep_settings.dc_sweep_index1 = temp_group2 - 1;
 			    
 			    temp = strtok(NULL, "\t ");
 			    if(temp == NULL || temp[0] == 13) {
@@ -1468,7 +2673,7 @@ void parseInput(FILE *p_file) {
 				printf("Terminating.\n");
 				exit(-1);
 			    }
-			    dc_sweep_start = atof(temp);
+			    circuit_simulation.dc_sweep_settings.dc_sweep_start = invalid_number_checker(temp);
 			    
 			    temp = strtok(NULL, "\t ");
 			    if(temp == NULL || temp[0] == 13) {
@@ -1476,7 +2681,7 @@ void parseInput(FILE *p_file) {
 				printf("Terminating.\n");
 				exit(-1);
 			    }
-                            dc_sweep_end = atof(temp);
+                            circuit_simulation.dc_sweep_settings.dc_sweep_end = invalid_number_checker(temp);
 			    
 			    temp = strtok(NULL, "\t \n");
 			    if(temp == NULL || temp[0] == 13) {
@@ -1484,7 +2689,7 @@ void parseInput(FILE *p_file) {
 				printf("Terminating.\n");
 				exit(-1);
 			    }
-                            dc_sweep_step = atof(temp);
+                            circuit_simulation.dc_sweep_settings.dc_sweep_step = invalid_number_checker(temp);
 			    
 			    temp = strtok(NULL, "\t \n");
 			    
@@ -1494,47 +2699,58 @@ void parseInput(FILE *p_file) {
 				exit(-1);
 			    }
 			    
-			    if(dc_sweep_start == dc_sweep_end) {
+			    if(circuit_simulation.dc_sweep_settings.dc_sweep_start == circuit_simulation.dc_sweep_settings.dc_sweep_end) {
 			        printf("\n\nThe start and stop value must no be equal, at line %d.\n", counter);
 		                printf("Terminating.\n");
 		                exit(-1); 
 			    }
 			    			    
-			    if(dc_sweep_step == 0) {
+			    if(circuit_simulation.dc_sweep_settings.dc_sweep_step == 0) {
 			        printf("\n\nThe sweep step must not be 0, at line %d.\n", counter);
 		                printf("Terminating.\n");
 		                exit(-1); 
 			    }
 			    
-			    if(dc_sweep_start < dc_sweep_end && dc_sweep_step < 0) {
+			    if(circuit_simulation.dc_sweep_settings.dc_sweep_start < circuit_simulation.dc_sweep_settings.dc_sweep_end && circuit_simulation.dc_sweep_settings.dc_sweep_step < 0) {
 			        printf("\n\nThe sweep step must be greater than zero, at line %d.\n", counter);
 		                printf("Terminating.\n");
 		                exit(-1); 
 			    }
 			    
-			    if(dc_sweep_start > dc_sweep_end && dc_sweep_step > 0) {
+			    if(circuit_simulation.dc_sweep_settings.dc_sweep_start > circuit_simulation.dc_sweep_settings.dc_sweep_end && circuit_simulation.dc_sweep_settings.dc_sweep_step > 0) {
 			        printf("\n\nThe sweep step must be less than zero, at line %d.\n", counter);
 		                printf("Terminating.\n");
 		                exit(-1); 
 			    }
 			    
-			    sweep_name[0] = '\0';
-			    strcat(sweep_name, "V ");
-			    strcat(sweep_name, current1 -> string_name);
+			    circuit_simulation.dc_sweep_settings.sweep_name[0] = '\0';
+			    strcat(circuit_simulation.dc_sweep_settings.sweep_name, "V ");
+			    strcat(circuit_simulation.dc_sweep_settings.sweep_name, current1 -> string_name);
 	
 			    break;
 			  
 			case 'I':
 			case 'i':
 			    temp++;
+			    
+			    if(temp[0] == '\0') {
+			        temp = strtok(NULL, "\t ");
+			    }
+			    
+			    for(k = 0; k < strlen(temp); k++) {
+				if(temp[k] == 13) {
+				    temp[k] = '\0'; 
+				}
+			    }
+			    
 			    for(current1 = head_twoTerminalsElement_list; head_twoTerminalsElement_list != NULL && current1 != NULL; current1 = current1 -> next) {	  
 			        if(current1 -> type == CURRENT_SOURCE && !strcasecmp(temp, current1 -> string_name)) {
                                     break;
 				}
 			    }
 			    
-			    dc_sweep_index1 = -1;
-                            dc_sweep_index2 = -1;
+			    circuit_simulation.dc_sweep_settings.dc_sweep_index1 = -1;
+                           circuit_simulation.dc_sweep_settings.dc_sweep_index2 = -1;
 			    
 			    if(current1 == NULL) {
 			        printf("\n\nThe element, I%s does not exist, at line %d.\n", temp, counter);
@@ -1542,14 +2758,14 @@ void parseInput(FILE *p_file) {
 		                exit(-1); 
 			    }
 			    
-			    dc_sweep = SWEEP_CURRENT_SOURCE;
+			    circuit_simulation.dc_sweep_settings.dc_sweep = SWEEP_CURRENT_SOURCE;
 			    
 			    if(current1 -> positive_terminal) {
-		                 dc_sweep_index1 = current1 -> positive_terminal - 1;
+		                 circuit_simulation.dc_sweep_settings.dc_sweep_index1 = current1 -> positive_terminal - 1;
 		            }
 		
 		            if(current1 -> negative_terminal) {
-		                 dc_sweep_index2 = current1 -> negative_terminal - 1;
+		                 circuit_simulation.dc_sweep_settings.dc_sweep_index2 = current1 -> negative_terminal - 1;
 		            }
 		            
 		            temp = strtok(NULL, "\t ");
@@ -1558,7 +2774,7 @@ void parseInput(FILE *p_file) {
 				printf("Terminating.\n");
 				exit(-1);
 			    }
-			    dc_sweep_start = atof(temp);
+			    circuit_simulation.dc_sweep_settings.dc_sweep_start = invalid_number_checker(temp);
 			    
 			    temp = strtok(NULL, "\t ");
 			    if(temp == NULL || temp[0] == 13) {
@@ -1566,7 +2782,7 @@ void parseInput(FILE *p_file) {
 				printf("Terminating.\n");
 				exit(-1);
 			    }
-                            dc_sweep_end = atof(temp);
+                            circuit_simulation.dc_sweep_settings.dc_sweep_end = invalid_number_checker(temp);
 			    
 			    temp = strtok(NULL, "\t \n");
 			    if(temp == NULL || temp[0] == 13) {
@@ -1574,7 +2790,7 @@ void parseInput(FILE *p_file) {
 				printf("Terminating.\n");
 				exit(-1);
 			    }
-                            dc_sweep_step = atof(temp);
+                            circuit_simulation.dc_sweep_settings.dc_sweep_step = invalid_number_checker(temp);
 			    
 			    temp = strtok(NULL, "\t \n");
 			    
@@ -1584,33 +2800,33 @@ void parseInput(FILE *p_file) {
 				exit(-1);
 			    }			    
 			    
-			    if(dc_sweep_start == dc_sweep_end) {
+			    if(circuit_simulation.dc_sweep_settings.dc_sweep_start == circuit_simulation.dc_sweep_settings.dc_sweep_end) {
 			        printf("\n\nThe start and stop value must not be equal, at line %d.\n", counter);
 		                printf("Terminating.\n");
 		                exit(-1); 
 			    }
 			    
-			    if(dc_sweep_step == 0) {
+			    if(circuit_simulation.dc_sweep_settings.dc_sweep_step == 0) {
 			        printf("\n\nThe sweep step must not be 0, at line %d.\n", counter);
 		                printf("Terminating.\n");
 		                exit(-1); 
 			    }			    
 			    
-			    if(dc_sweep_start < dc_sweep_end && dc_sweep_step < 0) {
+			    if(circuit_simulation.dc_sweep_settings.dc_sweep_start < circuit_simulation.dc_sweep_settings.dc_sweep_end && circuit_simulation.dc_sweep_settings.dc_sweep_step < 0) {
 			        printf("\n\nThe sweep step must be greater than zero, at line %d.\n", counter);
 		                printf("Terminating.\n");
 		                exit(-1); 
 			    }
 			    
-			    if(dc_sweep_start > dc_sweep_end && dc_sweep_step > 0) {
+			    if(circuit_simulation.dc_sweep_settings.dc_sweep_start > circuit_simulation.dc_sweep_settings.dc_sweep_end && circuit_simulation.dc_sweep_settings.dc_sweep_step > 0) {
 			        printf("\n\nThe sweep step must be less than zero, at line %d.\n", counter);
 		                printf("Terminating.\n");
 		                exit(-1); 
 			    }
 			    
-			    sweep_name[0] = '\0';
-			    strcat(sweep_name, "I ");
-			    strcat(sweep_name, current1 -> string_name);
+			    circuit_simulation.dc_sweep_settings.sweep_name[0] = '\0';
+			    strcat(circuit_simulation.dc_sweep_settings.sweep_name, "I ");
+			    strcat(circuit_simulation.dc_sweep_settings.sweep_name, current1 -> string_name);
                
 			    break;			    
 			  
@@ -1624,6 +2840,12 @@ void parseInput(FILE *p_file) {
 		else if(!strcasecmp(temp, "PLOT") || !strcasecmp(temp, "PRINT")) {
 		  
 		    temp = strtok(NULL, "\t ");
+		    
+		    for(k = 0; k < strlen(temp); k++) {
+			if(temp[k] == 13) {
+			    temp[k] = '\0'; 
+			}
+		    }
 		    
 		    if(!strcasecmp(temp, "DC")) {
 			do {
@@ -1649,7 +2871,7 @@ void parseInput(FILE *p_file) {
 				exit(-1); 
 			    }
 			    
-			    node_dc_plot_vector[temp3] = 1;
+			    (circuit_simulation.plot_settings + temp3) -> dc_sweep_plot = ENABLED;
 			} while(1);
 		    }
 		    else if(!strcasecmp(temp, "TRAN")) {
@@ -1676,25 +2898,67 @@ void parseInput(FILE *p_file) {
 				exit(-1); 
 			    }
 			    
-			    node_transient_plot_vector[temp3] = 1;
+			    (circuit_simulation.plot_settings + temp3) -> transient_plot = ENABLED;
+			} while(1);
+		    }
+		    else if(!strcasecmp(temp, "AC")) {
+		      
+		        temp = strtok(NULL, "\t \n");
+			
+			if(!strcasecmp(temp, "LINEAR")) {
+			    circuit_simulation.ac_analysis_settings.plot_scale = LINEAR;
+			}
+			else if(!strcasecmp(temp, "DB")) {
+			    circuit_simulation.ac_analysis_settings.plot_scale = DB;
+			}
+			else {
+			    printf("Expecting plot scale mode (LINEAR or DB), at line %d.\n", counter);
+			    printf("Terminating.\n");
+			    exit(-1);
+			}
+		        
+			do {
+			    temp = strtok(NULL, "\t vV()\n");
+			  
+			    if(temp != NULL) {
+				for(i = 0; i < strlen(temp); i++) {
+				    if(temp[i] == 13) {
+					temp[i] = '\0'; 
+				    }
+				}
+			    }
+			  
+			    if (temp == NULL || temp[0] == '\0') {
+				break;
+			    }
+			  
+			    temp3 = search_for_node(temp);
+			    
+			    if(temp3 == -1) {
+				printf("\n\nThe node, %s does not exist, at line %d.\n", temp, counter);
+				printf("Terminating.\n");
+				exit(-1); 
+			    }
+			    
+			    (circuit_simulation.plot_settings + temp3) -> ac_plot = ENABLED;
 			} while(1);
 		    }
 		    else {
-			printf("Expecting plot mode (DC or TRAN), at line %d.\n", counter);
+			printf("Expecting plot mode (DC or TRAN or AC), at line %d.\n", counter);
 			printf("Terminating.\n");
 			exit(-1);
 		    }  
 		}
 		else if(!strcasecmp(temp, "TRAN")) {
-		    transient_analysis = 1;
+		    circuit_simulation.transient_analysis_settings.transient_analysis = ENABLED;
 		    
-		    temp = strtok(NULL, "\t ");
+		    temp = strtok(NULL, "\t \n");
 		    if(temp == NULL || temp[0] == 13) {
 			printf("Transient time step value not found at line %d.\n", counter);
 			printf("Terminating.\n");
 			exit(-1);
 		    }
-		    time_step = atof(temp);
+		    circuit_simulation.transient_analysis_settings.time_step = invalid_number_checker(temp);
 		    
 		    temp = strtok(NULL, "\t \n");
 		    if(temp == NULL || temp[0] == 13) {
@@ -1702,7 +2966,7 @@ void parseInput(FILE *p_file) {
 			printf("Terminating.\n");
 			exit(-1);
 		    }
-                    fin_time = atof(temp);
+                    circuit_simulation.transient_analysis_settings.fin_time = invalid_number_checker(temp);
 		    
 		    temp = strtok(NULL, "\t \n");
 			    
@@ -1712,27 +2976,112 @@ void parseInput(FILE *p_file) {
 			exit(-1);
 		    }		
 		    
-		    if(time_step <= 0) {
+		    if( circuit_simulation.transient_analysis_settings.time_step <= 0) {
 			 printf("\n\nThe time step must be greater than 0, at line %d.\n", counter);
 		         printf("Terminating.\n");
 		         exit(-1); 
 		    }
 		    
-		    if(fin_time <= 0) {
+		    if( circuit_simulation.transient_analysis_settings.fin_time <= 0) {
 			 printf("\n\nThe finish time must be greater than 0, at line %d.\n", counter);
 		         printf("Terminating.\n");
 		         exit(-1); 
 		    }
 		    
-		    if(time_step >= fin_time) {
+		    if( circuit_simulation.transient_analysis_settings.time_step >=  circuit_simulation.transient_analysis_settings.fin_time) {
 			printf("\n\nThe time step must lower than finish time, at line %d.\n", counter);
 		        printf("Terminating.\n");
 		        exit(-1); 
 		    }
 	
 		}
+		else if(!strcasecmp(temp, "AC")) {
+		    circuit_simulation.ac_analysis_settings.ac_analysis = ENABLED;
+		    
+		    temp = strtok(NULL, "\t \n");
+		    if(temp == NULL || temp[0] == 13) {
+			printf("AC analysis scale not found at line %d.\n", counter);
+			printf("Terminating.\n");
+			exit(-1);
+		    }
+		    
+		    for(k = 0; k < strlen(temp); k++) {
+			if(temp[k] == 13) {
+			    temp[k] = '\0'; 
+			}
+		    }
+		    
+		    if(!strcasecmp(temp, "LIN")) {
+		        circuit_simulation.ac_analysis_settings.scale = LIN;
+		    }
+		    else if(!strcasecmp(temp, "LOG")) {
+		        circuit_simulation.ac_analysis_settings.scale = LOG;
+		    }
+		    else {
+		        printf("Invalid scale found at line %d.\n", counter);
+			printf("Terminating.\n");
+			exit(-1);
+		    }
+		    
+		    temp = strtok(NULL, "\t \n");
+		    if(temp == NULL || temp[0] == 13) {
+			printf("Points value not found at line %d.\n", counter);
+			printf("Terminating.\n");
+			exit(-1);
+		    }
+                    circuit_simulation.ac_analysis_settings.points = invalid_number_checker(temp);
+		    
+		    temp = strtok(NULL, "\t \n");
+		    if(temp == NULL || temp[0] == 13) {
+			printf("Starting frequency not found at line %d.\n", counter);
+			printf("Terminating.\n");
+			exit(-1);
+		    }
+                    circuit_simulation.ac_analysis_settings.start_freq = invalid_number_checker(temp);
+		    
+		    temp = strtok(NULL, "\t \n");
+		    if(temp == NULL || temp[0] == 13) {
+			printf("Ending frequency not found at line %d.\n", counter);
+			printf("Terminating.\n");
+			exit(-1);
+		    }
+                    circuit_simulation.ac_analysis_settings.end_freq = invalid_number_checker(temp);
+		    
+		    temp = strtok(NULL, "\t \n");
+			    
+		    if(temp != NULL && temp[0] != 13) {
+			printf("Too many inputs at line %d.\n", counter);
+			printf("Terminating.\n");
+			exit(-1);
+		    }
+		    
+		    if( circuit_simulation.ac_analysis_settings.points <= 0) {
+			 printf("\n\nPoints must be greater than 0, at line %d.\n", counter);
+		         printf("Terminating.\n");
+		         exit(-1); 
+		    }
+		    
+		    if( circuit_simulation.ac_analysis_settings.start_freq < 0) {
+			 printf("\n\nStarting frequency must be greater than -1, at line %d.\n", counter);
+		         printf("Terminating.\n");
+		         exit(-1); 
+		    }
+		    
+		    if( circuit_simulation.ac_analysis_settings.end_freq < 0) {
+			 printf("\n\nEnding frequency must be greater than -1, at line %d.\n", counter);
+		         printf("Terminating.\n");
+		         exit(-1); 
+		    }
+		   		    
+		    if( circuit_simulation.ac_analysis_settings.end_freq <=  circuit_simulation.ac_analysis_settings.start_freq) {
+			printf("\n\nThe starting frequency must be lower than the ending frequency, at line %d.\n", counter);
+		        printf("Terminating.\n");
+		        exit(-1); 
+		    }
+	
+		}
 		else if(!strcasecmp(temp, "OP")) {
-		    operating_point = 1; // for printing currents of the elements at dc analysis
+		     circuit_simulation.dc_analysis_settings.operating_point = ENABLED; // for printing currents of the elements at dc analysis
 		}
 		else {
 		    printf("Cannot parse line %d.\n", counter);
@@ -1759,7 +3108,7 @@ void parseInput(FILE *p_file) {
 	printf("Terminating.\n");
 	exit(-1);   
     }
-    
+
     printf("\n\nParsing results. The circuit contains:\n\n");
 
     printf("          Nodes: %7d\n", number_of_nodes + 1);
@@ -1824,10 +3173,12 @@ void parseInput(FILE *p_file) {
     printf("\n\n");
     #endif   
     
+    free_avl_tree();
+    
 }
 
 
-void insertTwoTerminalsElement(struct twoTerminalsElement *current) {
+void insertTwoTerminalsElement(twoTerminalsElement *current) {
  
     if(head_twoTerminalsElement_list == NULL) {
         head_twoTerminalsElement_list = current;
@@ -1841,7 +3192,7 @@ void insertTwoTerminalsElement(struct twoTerminalsElement *current) {
 }
 
 
-void insertThreeTerminalsElement(struct threeTerminalsElement *current) { 
+void insertThreeTerminalsElement(threeTerminalsElement *current) { 
  
     if(head_threeTerminalsElement_list == NULL) {
         head_threeTerminalsElement_list = current;
@@ -1855,7 +3206,7 @@ void insertThreeTerminalsElement(struct threeTerminalsElement *current) {
 }
 
 
-void insertFourTerminalsElement(struct fourTerminalsElement *current) {
+void insertFourTerminalsElement(fourTerminalsElement *current) {
  
     if(head_fourTerminalsElement_list == NULL) {
         head_fourTerminalsElement_list = current;
@@ -1868,179 +3219,21 @@ void insertFourTerminalsElement(struct fourTerminalsElement *current) {
     
 }
 
+double invalid_number_checker(char *string) {
+  double temp;
+  char *p;
 
-int hash(char *string) {
-  struct hash_node *temp = NULL, *current = NULL, *last = NULL;
-  int i, temp2;
-  unsigned int hash_code = 5381;
-  
-  
-    /*check whether the node is the ground */
-    if(!strcmp(string, "0")) {
-        ground_found = 1;
-        return 0;
-    }
-      
-    for(i = 0; string[i] != '\0'; i++){ //Convert to lower Case and calculate the hash code
-        string[i] = tolower(string[i]);
-	hash_code += (hash_code << 5) + hash_code + string[i]; //DJB
-    }
-       
-    temp2 = hash_code % HASH_TABLE_SIZE;  // The node will be in one of the lists (0 - 1023)
-    
-    if(head_hash_node_list[temp2] == NULL) { // The corresponding list is empty
-	current = (struct hash_node*) malloc(sizeof(struct hash_node)); // allocate new node for it
-		  
-	if(current == NULL) {
-	    printf("Could not allocate new node.\n");
-	    printf("Terminating.\n");
-	    exit(-1);
-	}
-	
-	strcpy(current -> name, string); // copy its name
-	current -> mapping = ++number_of_nodes; // get the next number for mapping
-	current -> next = NULL;
-	
-	#if DEBUG
-	printf("Node Mapping, %s -> %d.\n", current -> name, current -> mapping);
-        #endif
-	
-	node_real_names = (char *) realloc(node_real_names, (number_of_nodes + 1) * 256 * sizeof(char));  // the inverse mapping, number to name, O(1) access
-	
-	if(node_real_names == NULL) {
-	    printf("Could not allocate matrices.\n");
-	    printf("Terminating.\n");
-	    exit(-1);
-	}
-	
-	strcpy(node_real_names + number_of_nodes * 256, current -> name);
-	
-	node_dc_plot_vector = (int *) realloc(node_dc_plot_vector, (number_of_nodes + 1) * sizeof(int));  // dc sweep plot vector
-	
-	if(node_dc_plot_vector == NULL) {
-	    printf("Could not allocate matrices.\n");
-	    printf("Terminating.\n");
-	    exit(-1);
-	}
-	
-	node_dc_plot_vector[number_of_nodes] = 0;
-	
-	node_transient_plot_vector = (int *) realloc(node_transient_plot_vector, (number_of_nodes + 1) * sizeof(int)); // transient analysis plot vector
-	
-	if(node_transient_plot_vector == NULL) {
-	    printf("Could not allocate matrices.\n");
-	    printf("Terminating.\n");
-	    exit(-1);
-	}
-	
-	node_transient_plot_vector[number_of_nodes] = 0;
-	
-	head_hash_node_list[temp2] = current; // add the node to the list
-	
-	return current -> mapping; // return its mapping
-    }
-    else { // the list is not empty
-	for(temp = head_hash_node_list[temp2]; temp != NULL;  temp = temp -> next) { // search the whole list
-	    if(!strcmp(string, temp -> name)) {
-	        break; // already in the list
-	    }
-	    last = temp;
-	}
-	
-	if(temp != NULL) {
-	    return temp -> mapping; // already in the list, return its mapping
-	}
-	else { // not in the list
-	    current = (struct hash_node*) malloc(sizeof(struct hash_node)); // allocate new node for it
-		  
-	    if(current == NULL) {
-	        printf("Could not allocate new node.\n");
-	        printf("Terminating.\n");
-	        exit(-1);
-	    }
-	    	
-	    strcpy(current -> name, string); // copy its name
-	    current -> mapping = ++number_of_nodes; // get the next number for mapping
-	    current -> next = NULL; 
-	    
-	    #if DEBUG
-	    printf("Mapping, %s -> %d.\n", current -> name, current -> mapping);
-            #endif
-	    
-	    node_real_names = (char *) realloc(node_real_names, (number_of_nodes + 1) * 256 * sizeof(char));  // the inverse mapping, number to name, O(1) access
-	
-	    if(node_real_names == NULL) {
-		printf("Could not allocate matrices.\n");
-		printf("Terminating.\n");
-		exit(-1);
-	    }
-	    
-	    strcpy(node_real_names + number_of_nodes * 256, current -> name);
-	    
-	    node_dc_plot_vector = (int *) realloc(node_dc_plot_vector, (number_of_nodes + 1) * sizeof(int));  // dc sweep plot vector
-	    
-	    if(node_dc_plot_vector == NULL) {
-		printf("Could not allocate matrices.\n");
-		printf("Terminating.\n");
-		exit(-1);
-	    }
-	    
-	    node_dc_plot_vector[number_of_nodes] = 0;
-	    
-	    node_transient_plot_vector = (int *) realloc(node_transient_plot_vector, (number_of_nodes + 1) * sizeof(int)); // transient analysis plot vector
-	    
-	    if(node_transient_plot_vector == NULL) {
-		printf("Could not allocate matrices.\n");
-		printf("Terminating.\n");
-		exit(-1);
-	    }
-	    
-	    node_transient_plot_vector[number_of_nodes] = 0;
-	    
-	    last -> next = current; // add the node to the list
-	
-	    return current -> mapping; // return its mapping
-	}
-    }
-      
-}
-
-int search_for_node(char *string) { // this function is used for the plot/print options, to check if the requested node for plotting, is in the circuit
-  struct hash_node *temp = NULL;
-  int i, temp2;
-  unsigned int hash_code = 5381;
-  
-     if(!strcmp(string, "0") && ground_found == 0) { // requested ground for plotting, but ground was not found yet
-        return -1;
-     }
-     else if(!strcmp(string, "0") && ground_found == 1) { // ground was found, return its mapping
-        return 0; 
+     errno = 0;
+     
+     temp = strtod(string, &p);
+ 
+     if(errno != 0 || string == p || (*p != '\0' && *p != 13 && *p != 10)) {
+         printf("Invalid input. Required number, found string at line %d.\n", counter);
+	 printf("Terminating.\n");
+	 exit(-1);
      }
      
-     for(i = 0; string[i] != '\0'; i++){ //Convert to lower Case and calculate the hash code
-        string[i] = tolower(string[i]);
-	hash_code += (hash_code << 5) + hash_code + string[i]; //DJB
-     }
-       
-     temp2 = hash_code % HASH_TABLE_SIZE; // the node will be in one of the lists (0 - 1023)
-     
-     if(head_hash_node_list[temp2] == NULL) { // the corresponding list is empty
-         return -1;
-     }
-     else { // the list is not empty
-	for(temp = head_hash_node_list[temp2]; temp != NULL;  temp = temp -> next) {
-	    if(!strcmp(string, temp -> name)) {
-	        break; // found it
-	    }
-	}
-	
-	if(temp != NULL) {
-	    return temp -> mapping; // found it, return is mapping
-	}
-	else {
-	    return -1; // not found
-	}
-    }
+     return temp;
   
 }
 
