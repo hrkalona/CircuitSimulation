@@ -66,65 +66,11 @@ double complex getElementAtComplex(const cs_ci *A, int i, int j) {
   
 }
 
-
-/* w=A*v */
-void smatrxvect(cs_di *A,double *v,double *w,unsigned int n,unsigned int m) {
-	int j,p;
-
-	memset(w,0,n*sizeof(double));
-
-	for(j=0;j<n;j++)
-		for(p=A->p[j];p<A->p[j+1];p++)
-			w[A->i[p]]=w[A->i[p]]+A->x[p]*v[j];
-}
-
-
-/* w=alpha*A*v */
-void ssmxv(cs_di *A,double alpha,double *v,double *w,unsigned int n,unsigned int m) {
-	int j,p;
-
-	memset(w,0,n*sizeof(double));
-
-	for(j=0;j<n;j++)
-		for(p=A->p[j];p<A->p[j+1];p++)
-			w[A->i[p]]=w[A->i[p]]+A->x[p]*alpha*v[j];
-}
-
-
-/* w=trans(A)*v */
-void smatrtxvect(cs_di *A,double *v,double *w,unsigned int n,unsigned int m) {
-	int j,p;
-
-	for(j=0;j<m;j++)
-	{
-		w[j]=0.0;
-		for(p=A->p[j];p<A->p[j+1];p++)
-			w[j]=w[j]+A->x[p]*v[A->i[p]];
-
-	}
-}
-
 /* w=alpha*A*v+u */
 void ssmxvpv(cs_di *A,double alpha,double *v,double *u,double *w,unsigned int n,unsigned int m) {
 	int j,p;
 
-	memcpy(w,u,n*sizeof(double));
-
 	for(j=0;j<n;j++)
 		for(p=A->p[j];p<A->p[j+1];p++)
-			w[A->i[p]]=w[A->i[p]]+A->x[p]*alpha*v[j];
-}
-
-
-
-/* w=alpha*A*v+beta*u */
-void ssmxvpsv(cs_di *A,double alpha,double *v,double *u,double beta,double *w,unsigned int n,unsigned int m) {
-		int j,p;
-
-		for(j=0;j<n;j++)
-			w[j]=beta*u[j];
-		for(j=0;j<n;j++)
-			for(p=A->p[j];p<A->p[j+1];p++)
-				w[A->i[p]]=w[A->i[p]]+A->x[p]*alpha*v[j];
-
+			w[A->i[p]]=u[A->i[p]]+A->x[p]*alpha*v[j];
 }

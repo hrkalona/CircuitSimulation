@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include "types.h"
 
 
@@ -15,12 +16,10 @@ typedef struct  Avl_node {
    int ht; // height information for the avl tree
 } Avl_node;
 
-int number_of_nodes; // number of nodes, not counting ground
-
 Avl_node *root_node;  // the root of the avl tree
-int current_mapping; //the latest mapping used, either new or old
+unsigned int current_mapping; //the latest mapping used, either new or old
 
-int ground_found;  //flag
+unsigned int ground_found;  //flag
 
 /*This function maps the name string to a unique integer identifier.
 Checks whether the same name already exists (making non case-sensitive comparison) otherwise creates

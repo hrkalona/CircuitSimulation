@@ -78,23 +78,24 @@ int main(int argc, char* argv[])
 
 	DCAnalysis();
 
-	if (circuit_simulation.dc_sweep_settings.dc_sweep)
+	if (circuit_simulation.number_of_sweeps > 0)
 	{
 		DCSweep();
 	}
 
-	if (circuit_simulation.transient_analysis_settings.transient_analysis)
+	if (circuit_simulation.number_of_transient_analysis > 0)
 	{
 		TransientAnalysis();
 	}
+	else {
+		freeAllocationsDC();
+	}
 	
-	freeAllocations1();
-	
-	if (circuit_simulation.ac_analysis_settings.ac_analysis) {
+	if (circuit_simulation.number_of_ac_analysis > 0) {
 	      ACAnalysis();
 	}
 	
-	freeAllocations2();
+	freeAllocationsFinal();
 
 	gettimeofday( &calc_end, NULL );
 
@@ -152,30 +153,34 @@ void init(void)
 
 	if (circuit_simulation.plot_settings == NULL)
 	{
-		printf( "Could not allocate matrices.\n" );
+		printf( "Could not allocate memory.\n" );
 		printf( "Terminating.\n" );
 		exit( -1 );
 	}
 
 	strcpy( circuit_simulation.plot_settings->name, "0" );
-	circuit_simulation.plot_settings->dc_sweep_plot = 0;
-	circuit_simulation.plot_settings->transient_plot = 0;
+	circuit_simulation.plot_settings->dc_sweep_plot = DISABLED;
+	circuit_simulation.plot_settings->transient_plot = DISABLED;
+	circuit_simulation.plot_settings->ac_plot = DISABLED;
+	
+	circuit_simulation.number_of_sweeps = 0;
+	circuit_simulation.number_of_transient_analysis = 0;
+	circuit_simulation.number_of_ac_analysis = 0;
+	
+	circuit_simulation.dc_sweep_settings = NULL;
+	circuit_simulation.transient_analysis_settings = NULL;
+	circuit_simulation.ac_analysis_settings = NULL;
 
-	number_of_nodes = 0;
-	group1_elements = 0;
-	group2_elements = 0;
-
-	circuit_simulation.dc_sweep_settings.dc_sweep = SWEEP_OFF;
-	circuit_simulation.dc_sweep_settings.dc_sweep_start = 0;
-	circuit_simulation.dc_sweep_settings.dc_sweep_end = 0;
-	circuit_simulation.dc_sweep_settings.dc_sweep_step = 0;
-	circuit_simulation.dc_sweep_settings.dc_sweep_index1 = -1;
-	circuit_simulation.dc_sweep_settings.dc_sweep_index2 = -1;
+	circuit_simulation.number_of_nodes = 0;
+	circuit_simulation.group1_elements = 0;
+	circuit_simulation.group2_elements = 0;
 
 	for (i = 0; i < ELEMENTS; i++)
 	{
-		number_of_elements[i] = 0;
+		circuit_simulation.number_of_elements[i] = 0;
 	}
+	
+	circuit_simulation.ac_plot_scale = LINEAR;
 
 	non_zeroes_G = 0;
 	non_zeroes_C = 0;
@@ -184,10 +189,7 @@ void init(void)
 	circuit_simulation.matrix_sparsity = NORMAL;
 	circuit_simulation.method = DIRECT;
 	circuit_simulation.matrix_type = NONSPD;
-
-	circuit_simulation.transient_analysis_settings.transient_analysis = DISABLED;
-
-	circuit_simulation.transient_analysis_settings.diff_method = TRAPEZOIDAL;
+	circuit_simulation.diff_method = TRAPEZOIDAL;	    
 
 	circuit_simulation.iterative_methods.itol = 1e-3;
 	circuit_simulation.iterative_methods.EPS = 1e-16;
@@ -195,16 +197,13 @@ void init(void)
 
 	circuit_simulation.dc_analysis_settings.operating_point = DISABLED;
 	
-	circuit_simulation.ac_analysis_settings.ac_analysis = DISABLED;
-	
-	circuit_simulation.ac_analysis_settings.plot_scale = LINEAR;
 
 	circuit_simulation.gnuplot = GNUPLOT_OFF;
 	circuit_simulation.dot_graph = DOT_GRAPH_OFF;
 
 }
 
-void freeAllocations2(void) {
+void freeAllocationsFinal(void) {
     twoTerminalsElement *current1 = NULL, *last1 = NULL; 
     threeTerminalsElement *current2 = NULL, *last2 = NULL;
     fourTerminalsElement *current3 = NULL, *last3 = NULL;
@@ -230,13 +229,14 @@ void freeAllocations2(void) {
 					free( last1->transient->pwl->i );
 					free( last1->transient->pwl );
 					break;
-			}
-			if (circuit_simulation.transient_analysis_settings.transient_analysis)
-			{
-				free( last1->transient->vals );
-			}
+			}		
 			free( last1->transient );
 		}
+		
+		if(last1->ac != NULL) {
+			free(last1->ac);
+		}
+		
 		free( last1 );
 		last1 = current1;
 	}
@@ -260,12 +260,13 @@ void freeAllocations2(void) {
 				free( last1->transient->pwl );
 				break;
 		}
-		if (circuit_simulation.transient_analysis_settings.transient_analysis)
-		{
-			free( last1->transient->vals );
-		}
 		free( last1->transient );
 	}
+	
+	if(last1->ac != NULL) {
+		free(last1->ac);
+	}
+		
 	free( last1 );
 
 	for (last2 = current2 = head_threeTerminalsElement_list; head_threeTerminalsElement_list != NULL && (current2->next != NULL);)
@@ -286,32 +287,52 @@ void freeAllocations2(void) {
 	
 	free( circuit_simulation.plot_settings );
 	
-	free( vector_x_complex );
-
-	free( vector_b_complex );
+		
+	if(circuit_simulation.dc_sweep_settings != NULL)
+	{
+		free(circuit_simulation.dc_sweep_settings);
+	}
+	
+		
+	if(circuit_simulation.transient_analysis_settings != NULL)
+	{
+		free(circuit_simulation.transient_analysis_settings);
+	}
+	
+		
+	if(circuit_simulation.ac_analysis_settings != NULL)
+	{
+		free(circuit_simulation.ac_analysis_settings);
+	}
   
 }
 
-void freeAllocations1(void) {
+void freeAllocationsTransient(void) {
+  int i;
 	
-	if (circuit_simulation.transient_analysis_settings.transient_analysis)
-	{
-		free( sources );
-
-		if (circuit_simulation.matrix_sparsity == SPARSE)
-		{
-			cs_di_spfree( C2 );
-		}
-		else
-		{
-			free( matrix_C );
-		}
+			
+	for(i = 0; i < circuit_simulation.number_of_elements[CURRENT_SOURCE] + circuit_simulation.group2_elements; i++) {
+	      if(sources[i]->transient != NULL) {
+		  free(sources[i]->transient->vals);
+	      }
 	}
+	
+	free( sources );
+
+	if (circuit_simulation.matrix_sparsity == SPARSE)
+	{
+		cs_di_spfree( C2 );
+	}
+	else
+	{
+		free( matrix_C );
+	}
+	
 
 	if (circuit_simulation.matrix_sparsity == SPARSE)
 	{
 		if (circuit_simulation.method == DIRECT)
-		{  // && circuit_simulation.transient_analysis_settings.diff_method != FORWARD_EULER) {
+		{ 
 			cs_di_sfree( S );
 			cs_di_nfree( N );
 		}
@@ -325,7 +346,34 @@ void freeAllocations1(void) {
 		free( matrix_G );
 
 		if (circuit_simulation.method == DIRECT && circuit_simulation.matrix_type == NONSPD)
-				//&& circuit_simulation.transient_analysis_settings.diff_method != FORWARD_EULER)
+		
+		{
+			free( transposition );
+		}
+	}
+
+}
+
+void freeAllocationsDC(void) {
+
+	if (circuit_simulation.matrix_sparsity == SPARSE)
+	{
+		if (circuit_simulation.method == DIRECT)
+		{ 
+			cs_di_sfree( S );
+			cs_di_nfree( N );
+		}
+		else
+		{
+			cs_di_spfree( G2 );
+		}
+	}
+	else
+	{
+		free( matrix_G );
+
+		if (circuit_simulation.method == DIRECT && circuit_simulation.matrix_type == NONSPD)
+		
 		{
 			free( transposition );
 		}
@@ -341,6 +389,38 @@ void freeAllocations1(void) {
 	free( vector_b );
 
 }
+
+void freeAllocationsAC(void) {
+      
+        if (circuit_simulation.matrix_sparsity == SPARSE)
+	{
+	      if (circuit_simulation.method == DIRECT)
+	      {  
+		    cs_ci_sfree( Scomplex );
+		    cs_ci_nfree( Ncomplex );
+	      }
+	      else
+	      {
+		    cs_ci_spfree( G2complex );
+	      }
+	}
+	else
+	{
+	    free( matrix_Gcomplex );
+
+	    if (circuit_simulation.method == DIRECT && circuit_simulation.matrix_type == NONSPD)
+	    {
+		  free( transposition );
+	    }
+			  
+        }
+        
+        if (circuit_simulation.method == ITERATIVE)
+	{
+		free( inv_preconditioner_complex );
+	}
+}
+
 
 void Help(void)
 {
@@ -569,6 +649,8 @@ void Graph(void)
 				fprintf( file_ptr, "edge [dir=forward, style=bold, color=grey, label=\"-\"];\n" );
 				fprintf( file_ptr, "\"D%s\" -> \"%s\";\n", current1->string_name,
 						(circuit_simulation.plot_settings + current1->negative_terminal)->name );
+				break;
+			default:
 				break;
 
 		}

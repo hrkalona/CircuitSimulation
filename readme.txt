@@ -5,5 +5,7 @@ It can perform dc analysis, dc sweep, transient analysis, ac analysis (Including
 Compile:
 gcc -O3 *.c -o circuit_simulation -lblas -lm -L ./Sparse/CXSparse/Lib -lcxsparse
 
+or use compile.sh
+
 Help:
 ./circuit_simulation -help

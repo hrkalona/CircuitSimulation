@@ -32,7 +32,7 @@ inline Avl_node * insert(Avl_node *T, char *x) {
 	}
 	
 	strcpy(T->name, x);
-	current_mapping = T->mapping = ++number_of_nodes;
+	current_mapping = T->mapping = ++circuit_simulation.number_of_nodes;
         T->left=NULL;
         T->right=NULL;
 	
@@ -41,17 +41,18 @@ inline Avl_node * insert(Avl_node *T, char *x) {
         #endif
 	
 	
-	circuit_simulation.plot_settings = (plotSettings *) realloc(circuit_simulation.plot_settings, (number_of_nodes + 1) * sizeof(plotSettings));
+	circuit_simulation.plot_settings = (plotSettings *) realloc(circuit_simulation.plot_settings, (circuit_simulation.number_of_nodes + 1) * sizeof(plotSettings));
     
 	if(circuit_simulation.plot_settings == NULL) {
-	    printf("Could not allocate matrices.\n");
+	    printf("Could not allocate memory.\n");
 	    printf("Terminating.\n");
 	    exit(-1);
 	}
 	
-	strcpy((circuit_simulation.plot_settings + number_of_nodes) -> name, T -> name);
-	(circuit_simulation.plot_settings + number_of_nodes) -> dc_sweep_plot = 0;
-	(circuit_simulation.plot_settings + number_of_nodes) -> transient_plot = 0;
+	strcpy((circuit_simulation.plot_settings + circuit_simulation.number_of_nodes) -> name, T -> name);
+	(circuit_simulation.plot_settings + circuit_simulation.number_of_nodes) -> dc_sweep_plot = DISABLED;
+	(circuit_simulation.plot_settings + circuit_simulation.number_of_nodes) -> transient_plot = DISABLED;
+	(circuit_simulation.plot_settings + circuit_simulation.number_of_nodes) -> ac_plot = DISABLED;
 
     }
     else {
@@ -159,21 +160,23 @@ inline Avl_node * Delete(Avl_node *T, char *x)
 	if(strcmp(x, T->name) > 0)
         {
             T->right=Delete(T->right, x);
-            if(BF(T)==2)
+            if(BF(T)==2) {
                 if(BF(T->left)>=0)
                     T=LL(T);
                 else
                     T=LR(T);
+	    }
         }
         else
 	    if(strcmp(x, T->name) < 0)
                 {
                     T->left=Delete(T->left,x);
-                    if(BF(T)==-2)//Rebalance during windup
+                    if(BF(T)==-2) {//Rebalance during windup
                         if(BF(T->right)<=0)
                             T=RR(T);
                         else
                             T=RL(T);
+		    }
                 }
             else
               {
@@ -186,11 +189,12 @@ inline Avl_node * Delete(Avl_node *T, char *x)
 
 		      strcpy(T->name, p->name);
                       T->right=Delete(T->right,p->name);
-                      if(BF(T)==2)//Rebalance during windup
+                      if(BF(T)==2) {//Rebalance during windup
                         if(BF(T->left)>=0)
                             T=LL(T);
                         else
                             T=LR(T);
+		      }
                    }
                   else
                    return(T->left);

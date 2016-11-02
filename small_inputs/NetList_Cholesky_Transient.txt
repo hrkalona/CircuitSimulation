@@ -1,0 +1,25 @@
+
+I1 4 7 1e-3 SIN (1e-3 0.5 5 1 1 30) ac 2 135 
+I2 0 6 1e-3 PWL(0 1e-3) (1.2 0.1) (1.4 1) (2 0.2) (3 0.4) ac 1 80
+R1 1 5 1.5
+R2 1 2 1
+R3 5 2 50
+R4 5 6 0.1
+R5 2 6 1.5
+R6 3 4 0.1
+R7 7 0 1000
+R8 4 0 10
+R9 5 0 2
+R10 3 2 2
+C1 7 0 0.1
+C2 2 0 0.2
+
+*.TRAN 0.01 3
+*.ac lin 10 1 1000
+.PLOT TRAN V(1) V(4) V(5)
+.PLOT AC DB V(1) V(4) V(5)
+.PLOT DC V(1) V(4) V(5)
+.OPTIONS GNUPLOTL METHOD=TR SPD
+.options ITER ITOL=1e-6 SPD
+.ac log 100 0.02 150000
+*.dc i1 1e-3 2 0.01

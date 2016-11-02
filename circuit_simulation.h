@@ -16,13 +16,9 @@
 #include "avl_tree_string_mapping.h"
 
 
-int number_of_elements[ELEMENTS]; // helper array for counting each element type
-
-int group1_elements, group2_elements; // Group 1: R, C, I  / Group 2: V, L
-
-int non_zeroes_G;
-int non_zeroes_C;
-int non_zeroes_Gcomplex;
+unsigned int non_zeroes_G;
+unsigned int non_zeroes_C;
+unsigned int non_zeroes_Gcomplex;
 
 extern twoTerminalsElement *head_twoTerminalsElement_list, *last_twoTerminalsElement_list;
 extern threeTerminalsElement *head_threeTerminalsElement_list, *last_threeTerminalsElement_list;
@@ -76,9 +72,9 @@ double invalid_number_checker(char *);
 /* Creates the DC Matrix */
 void createMnaSystemDC(void);
 /* Creates the Transient Matrix */
-void createMnaSystemTransient(void);
+void createMnaSystemTransient(int run, double time_step, double fin_time);
 /* Creates the AC Matrix */
-void createMnaSystemAC(double f, long int run);
+void createMnaSystemAC(double f, long int run, long int internal_run);
 /*This function inserts a new two terminals element to the list*/
 void insertTwoTerminalsElement(twoTerminalsElement *current);
 /*This function inserts a new three terminals element to the list*/
@@ -86,8 +82,10 @@ void insertThreeTerminalsElement(threeTerminalsElement *current);
 /*This function inserts a new four terminals element to the list*/
 void insertFourTerminalsElement(fourTerminalsElement *current);
 /* Clean up */
-void freeAllocations1(void);
-void freeAllocations2(void);
+void freeAllocationsDC(void);
+void freeAllocationsTransient(void);
+void freeAllocationsAC(void);
+void freeAllocationsFinal(void);
 /* LU Decomposition for linear systems */
 void LUDecomposition(void);
 void LUDecompositionComplex(long int run);
@@ -107,8 +105,8 @@ void forward_substitution_Complex(void);
 void backward_substitution(void);
 void backward_substitution_Complex(void);
 /* Creates the inverse preconditioner for the iterative solving methods, M = 1 /diag(G) */
-void createInversePreconditioner(int length);
-void createInversePreconditionerComplex(int length);
+void createInversePreconditioner(unsigned int length);
+void createInversePreconditionerComplex(unsigned int length);
 /* An Iterative method for solving the system Ax=b, (General Purpose Matrices) */
 void BiConjugateGradient(int zero_x);
 void BiConjugateGradientComplex(int zero_x);
@@ -116,10 +114,10 @@ void BiConjugateGradientComplex(int zero_x);
 void ConjugateGradient(int zero_x);
 void ConjugateGradientComplex(int zero_x);
 /* x = inv(A) * b, when A is diagonal */
-void solve_diagonal_system(double *vector1, double *vector2, double *result, int length);
-void solve_diagonal_system_Complex(double complex *vector1, double complex *vector2, double complex *result, int length, int hermitian);
+void solve_diagonal_system(double *vector1, double *vector2, double *result, unsigned int length);
+void solve_diagonal_system_Complex(double complex *vector1, double complex *vector2, double complex *result, unsigned int length, int hermitian);
 /* Creates the values for every non dc source, for every time step */
-void createTransientSteps(transientComponent*  trans);
+void createTransientSteps(transientComponent*  trans, double time_step, double fin_time);
 /* Trapezoidal method for solving differential equations */
 void Trapezoidal(double *vector_e, double *vector_e_1);
 /* Backward Euler method for solving differential equations */

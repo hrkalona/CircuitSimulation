@@ -23,7 +23,7 @@ typedef enum {NONSPD, SPD} TYPE;
 
 typedef enum {DIRECT,ITERATIVE} LINEAR_SOLVING_METHOD;
 
-typedef enum {BACKWARD_EULER,TRAPEZOIDAL} DIFFERENTIAL_EQUATION_SOLVING_METHOD; //FORWARD_EULER
+typedef enum {BACKWARD_EULER,TRAPEZOIDAL} DIFFERENTIAL_EQUATION_SOLVING_METHOD;
 
 typedef enum {EXP, SIN, PULSE, PWL} IMPULSE;
 
@@ -35,7 +35,7 @@ typedef enum {DISABLED, ENABLED} OPTION;
 
 typedef enum {LIN, LOG} SCALE;
 
-typedef enum {LINEAR, DB} PLOT_SCALE;
+typedef enum {LINEAR, DB} AC_PLOT_SCALE;
 
 
 typedef struct { // spice format exp inputs
@@ -89,10 +89,10 @@ typedef struct {
 
 typedef struct twoTerminalsElement {
     ELEMENT_TYPE type; // V, I, R, C, L, (Diode just parsed, not used)
-    int name; // Element name
+    unsigned int name; // Element name
     char string_name[NAME_SIZE];  // Original given name
-    int positive_terminal; // positive terminal
-    int negative_terminal; // negative terminal
+    unsigned int positive_terminal; // positive terminal
+    unsigned int negative_terminal; // negative terminal
     double value; // Element value, according to type, SI
     transientComponent *transient; // transient part, for V, I, null if DC, or not V, I
     acComponent *ac; // ac part, for V, I, null if DC, or not V, I
@@ -101,23 +101,23 @@ typedef struct twoTerminalsElement {
 
 typedef struct threeTerminalsElement { // Just for parsing, not used
     ELEMENT_TYPE type;
-    int name;
+    unsigned int name;
     char string_name[NAME_SIZE];
-    int c_terminal;
-    int b_terminal;
-    int e_terminal;
+    unsigned int c_terminal;
+    unsigned int b_terminal;
+    unsigned int e_terminal;
     double value;
     struct threeTerminalsElement *next;
 } threeTerminalsElement;
 
 typedef struct fourTerminalsElement { // Just for parsing, not used
     ELEMENT_TYPE type;
-    int name;
+    unsigned int name;
     char string_name[NAME_SIZE];
-    int d_terminal;
-    int g_terminal;
-    int s_terminal;
-    int b_terminal;
+    unsigned int d_terminal;
+    unsigned int g_terminal;
+    unsigned int s_terminal;
+    unsigned int b_terminal;
     double length;
     double width;
     struct fourTerminalsElement *next;
@@ -143,20 +143,15 @@ typedef struct {
 } dcSweep;
 
 typedef struct {
-    OPTION transient_analysis; // transient analysis toggle
-    DIFFERENTIAL_EQUATION_SOLVING_METHOD diff_method; // differential equation solving method, Trapezoidal, Backward Euler or Forward Euler
     double time_step; // time step for the transient analysis
     double fin_time; // end time for the transinet analysis (start time = 0)
 } transientAnalysis;
 
 typedef struct {
-    OPTION ac_analysis; // ac analysis toggle
     SCALE scale;
-    int points;
+    unsigned int points;
     double start_freq; // starting frequency for ac analysis
     double end_freq; // ending frequency for ac analysis
-    
-    PLOT_SCALE plot_scale;
 } acAnalysis;
 
 typedef struct {
@@ -166,7 +161,7 @@ typedef struct {
 typedef struct {
     double itol; // iterative threshold
     double EPS;
-    int division_by_zero;
+    unsigned int division_by_zero;
 } iterativeMethods;
 
 typedef struct {
@@ -174,17 +169,31 @@ typedef struct {
     SPARSITY matrix_sparsity; // Sparse or Normal Matrices
     TYPE matrix_type; // General Purpose, or Symmetric Positive Definite Matrices
     LINEAR_SOLVING_METHOD method; // Direct or Iterative Methods for solving Ax=b
+    DIFFERENTIAL_EQUATION_SOLVING_METHOD diff_method; // differential equation solving method, Trapezoidal, Backward Euler
     iterativeMethods iterative_methods;
     
     GNUPLOT_OPT gnuplot; // plot the results using gnuplot (needs to be installed)
     DOT_GRAPH_OPT dot_graph; // display the graph of the circuit using dot (needs to be installed)
     
     dcAnalysis dc_analysis_settings;
-    dcSweep dc_sweep_settings;
-    transientAnalysis transient_analysis_settings;
-    acAnalysis ac_analysis_settings;
+    
+    dcSweep *dc_sweep_settings;
+    unsigned int number_of_sweeps;
+    
+    transientAnalysis *transient_analysis_settings;
+    unsigned int number_of_transient_analysis; 
+    
+    acAnalysis *ac_analysis_settings;
+    unsigned int number_of_ac_analysis;
+    AC_PLOT_SCALE ac_plot_scale;
     
     plotSettings *plot_settings;
+    unsigned int number_of_nodes; // number of nodes, not counting ground
+    
+    unsigned int number_of_elements[ELEMENTS]; // helper array for counting each element type
+
+    unsigned int group1_elements; // Group 1: R, C, I  
+    unsigned int group2_elements; // Group 2: V, L
 } circuitSimulation;
 
 circuitSimulation circuit_simulation;

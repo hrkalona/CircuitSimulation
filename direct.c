@@ -2,13 +2,18 @@
 
 void LUDecomposition(void)
 {
-	int k, dimension, i, m, l, j;
+#if DEBUG
+	int l;
+#endif
+	int k, i, m, j;
+	unsigned int dimension;
 
-	dimension = number_of_nodes + group2_elements;
+	dimension = circuit_simulation.number_of_nodes + circuit_simulation.group2_elements;
 
 	if (circuit_simulation.matrix_sparsity == SPARSE)
 	{
 		printf( "\n\nLU Decomposition...\n\n" );
+		
 		S = cs_di_sqr( 2, G2, 0 );
 		N = cs_di_lu( G2, S, 1 );
 		cs_di_spfree( G2 );
@@ -20,38 +25,6 @@ void LUDecomposition(void)
 			exit( -1 );
 		}
 
-#if DEBUG
-		printf("\nLU Decomposition\n~~~~~~~~~~~~~~~~~\n\n");
-		printf("\nDecomposed Matrix:\n\n");
-		for(k = 0; k < dimension; k++)
-		{
-			for(l = 0; l < dimension; l++)
-			{
-				if(l == k)
-				{
-					printf("  \\\\");
-				}
-				if(l >= k)
-				{
-					printf("%12lf ", getElementAt(N -> U, k, l));
-				}
-				else
-				{
-					printf("%12lf ", getElementAt(N -> L, k, l));
-				}
-			}
-			printf("\n\n");
-		}
-
-		printf("\n\n");
-
-		printf("\nLine Transposition:\n");
-		for(k = 0; k < dimension; k++)
-		{
-			printf("line %d contains line %d\n", N -> pinv[k], k);
-		}
-		printf("\n\n");
-#endif
 	}
 	else
 	{
@@ -100,9 +73,10 @@ void LUDecomposition(void)
 			}
 		}
 
+	}
+	
 #if DEBUG
 		printf("\nLU Decomposition\n~~~~~~~~~~~~~~~~~\n\n");
-
 		printf("\nDecomposed Matrix:\n\n");
 		for(k = 0; k < dimension; k++)
 		{
@@ -112,31 +86,54 @@ void LUDecomposition(void)
 				{
 					printf("  \\\\");
 				}
-				printf("%12lf ", matrix_G[k * dimension + l]);
-
+				
+				if (circuit_simulation.matrix_sparsity == SPARSE)
+				{
+				      if(l >= k)
+				      {
+					      printf("%12lf ", getElementAt(N -> U, k, l));
+				      }
+				      else
+				      {
+					      printf("%12lf ", getElementAt(N -> L, k, l));
+				      }
+				}
+				else {
+				      printf("%12lf ", matrix_G[k * dimension + l]);  
+				}
 			}
 			printf("\n\n");
 		}
 
+		printf("\n\n");
+
 		printf("\nLine Transposition:\n");
 		for(k = 0; k < dimension; k++)
-		{
-			printf("line %d contains line %d\n", k, transposition[k]);
+		{		
+		      if (circuit_simulation.matrix_sparsity == SPARSE)
+		      {
+			    printf("line %d contains line %d\n", N -> pinv[k], k);
+		      }
+		      else {
+			    printf("line %d contains line %d\n", k, transposition[k]);
+		      }
 		}
-
 		printf("\n\n");
 #endif
-	}
 
 }
 
 
 void LUDecompositionComplex(long int run)
 {
-	int k, dimension, i, m, l, j;
+	int k, i, m, j;
+	unsigned int dimension;
+#if DEBUG
+	int l;
 	double complex temp_val;
+#endif
 
-	dimension = number_of_nodes + group2_elements;
+	dimension = circuit_simulation.number_of_nodes + circuit_simulation.group2_elements;
 
 	if (circuit_simulation.matrix_sparsity == SPARSE)
 	{
@@ -153,41 +150,6 @@ void LUDecompositionComplex(long int run)
 			printf( "Terminating.\n" );
 			exit( -1 );
 		}
-
-#if DEBUG
-		printf("\nLU Decomposition\n~~~~~~~~~~~~~~~~~\n\n");
-		printf("\nDecomposed Matrix:\n\n");
-		for(k = 0; k < dimension; k++)
-		{
-			for(l = 0; l < dimension; l++)
-			{
-				if(l == k)
-				{
-					printf("  \\\\");
-				}
-				if(l >= k)
-				{
-				     temp_val = getElementAtComplex(Ncomplex -> U, k, l);	
-				     printf("(%7.3lf %7.3lfi) ", creal(temp_val), cimag(temp_val));
-				}
-				else
-				{
-				     temp_val = getElementAtComplex(Ncomplex -> L, k, l);
-				     printf("(%7.3lf %7.3lfi) ", creal(temp_val), cimag(temp_val));
-				}
-			}
-			printf("\n\n");
-		}
-
-		printf("\n\n");
-
-		printf("\nLine Transposition:\n");
-		for(k = 0; k < dimension; k++)
-		{
-			printf("line %d contains line %d\n", Ncomplex -> pinv[k], k);
-		}
-		printf("\n\n");
-#endif
 	}
 	else
 	{
@@ -237,10 +199,11 @@ void LUDecompositionComplex(long int run)
 				}
 			}
 		}
-
+	}
+	
+	
 #if DEBUG
 		printf("\nLU Decomposition\n~~~~~~~~~~~~~~~~~\n\n");
-
 		printf("\nDecomposed Matrix:\n\n");
 		for(k = 0; k < dimension; k++)
 		{
@@ -250,30 +213,54 @@ void LUDecompositionComplex(long int run)
 				{
 					printf("  \\\\");
 				}
-				printf("(%7.3lf %7.3lfi) ", creal(matrix_Gcomplex[k * dimension + l]), cimag(matrix_Gcomplex[k * dimension + l]));
-
+				if (circuit_simulation.matrix_sparsity == SPARSE)
+				{
+				      if(l >= k)
+				      {
+					  temp_val = getElementAtComplex(Ncomplex -> U, k, l);	
+					  printf("(%7.3lf %7.3lfi) ", creal(temp_val), cimag(temp_val));
+				      }
+				      else
+				      {
+					  temp_val = getElementAtComplex(Ncomplex -> L, k, l);
+					  printf("(%7.3lf %7.3lfi) ", creal(temp_val), cimag(temp_val));
+				      }
+				}
+				else {
+				      printf("(%7.3lf %7.3lfi) ", creal(matrix_Gcomplex[k * dimension + l]), cimag(matrix_Gcomplex[k * dimension + l]));
+				}
 			}
 			printf("\n\n");
 		}
 
+		printf("\n\n");
+
 		printf("\nLine Transposition:\n");
 		for(k = 0; k < dimension; k++)
 		{
-			printf("line %d contains line %d\n", k, transposition[k]);
+		      if (circuit_simulation.matrix_sparsity == SPARSE)
+		      {
+			    printf("line %d contains line %d\n", Ncomplex -> pinv[k], k);
+		      }
+		      else {
+			    printf("line %d contains line %d\n", k, transposition[k]);
+		      }
 		}
-
 		printf("\n\n");
 #endif
-	}
 
 }
 
 void CholeskyDecomposition(void)
 {
-	int k, i, l, j, dimension;
+	int k, i, j;
+	unsigned int dimension;
 	double sum, temp;
+#if DEBUG
+	int l;
+#endif
 
-	dimension = number_of_nodes + group2_elements;
+	dimension = circuit_simulation.number_of_nodes + circuit_simulation.group2_elements;
 
 	if (circuit_simulation.matrix_sparsity == SPARSE)
 	{
@@ -289,36 +276,6 @@ void CholeskyDecomposition(void)
 			exit( -1 );
 		}
 
-#if DEBUG
-		printf("\nCholesky Decomposition\n~~~~~~~~~~~~~~~~~~~~~~~\n\n");
-		printf("\nDecomposed Matrix:\n\n");
-		for(k = 0; k < dimension; k++)
-		{
-			for(l = 0; l < dimension; l++)
-			{
-				if(l == k)
-				{
-					printf("  \\\\");
-				}
-				if(l <= k)
-				{
-					printf("%12lf ", getElementAt(N -> L, k, l));
-				}
-				else
-				{
-					printf("%12lf ", getElementAt(N -> L, l, k));
-				}
-				if(l == k)
-				{
-					printf("  \\\\");
-				}
-
-			}
-			printf("\n\n");
-		}
-
-		printf("\n\n");
-#endif
 	}
 	else
 	{
@@ -356,9 +313,10 @@ void CholeskyDecomposition(void)
 			}
 		}
 
+	}
+	
 #if DEBUG
 		printf("\nCholesky Decomposition\n~~~~~~~~~~~~~~~~~~~~~~~\n\n");
-
 		printf("\nDecomposed Matrix:\n\n");
 		for(k = 0; k < dimension; k++)
 		{
@@ -368,7 +326,22 @@ void CholeskyDecomposition(void)
 				{
 					printf("  \\\\");
 				}
-				printf("%12lf ", matrix_G[k * dimension + l]);
+				
+				if (circuit_simulation.matrix_sparsity == SPARSE)
+				{
+				      if(l <= k)
+				      {
+					      printf("%12lf ", getElementAt(N -> L, k, l));
+				      }
+				      else
+				      {
+					      printf("%12lf ", getElementAt(N -> L, l, k));
+				      }
+				}
+				else {
+				      printf("%12lf ", matrix_G[k * dimension + l]);
+				}
+				
 				if(l == k)
 				{
 					printf("  \\\\");
@@ -379,19 +352,22 @@ void CholeskyDecomposition(void)
 		}
 
 		printf("\n\n");
-
 #endif
-	}
 
 }
 
 void CholeskyDecompositionComplex(long int run)
 {
-	int k, i, l, j, dimension;
+	int k, i, j;
+	unsigned int dimension;
 	double sum, temp;
-	double complex temp_val, sum2;
+	double complex sum2;
+#if DEBUG
+	int l;
+	double complex temp_val;
+#endif
 
-	dimension = number_of_nodes + group2_elements;
+	dimension = circuit_simulation.number_of_nodes + circuit_simulation.group2_elements;
 
 	if (circuit_simulation.matrix_sparsity == SPARSE)
 	{
@@ -408,39 +384,6 @@ void CholeskyDecompositionComplex(long int run)
 			printf( "Terminating.\n" );
 			exit( -1 );
 		}
-
-#if DEBUG
-		printf("\nCholesky Decomposition\n~~~~~~~~~~~~~~~~~~~~~~~\n\n");
-		printf("\nDecomposed Matrix:\n\n");
-		for(k = 0; k < dimension; k++)
-		{
-			for(l = 0; l < dimension; l++)
-			{
-				if(l == k)
-				{
-					printf("  \\\\");
-				}
-				if(l <= k)
-				{
-				       temp_val = getElementAtComplex(Ncomplex -> L, k, l);
-				       printf("(%7.3lf %7.3lfi) ", creal(temp_val), cimag(temp_val));
-				}
-				else
-				{
-				      temp_val = getElementAtComplex(Ncomplex -> L, l, k);
-				      printf("(%7.3lf %7.3lfi) ", creal(temp_val), cimag(temp_val));
-				}
-				if(l == k)
-				{
-					printf("  \\\\");
-				}
-
-			}
-			printf("\n\n");
-		}
-
-		printf("\n\n");
-#endif
 	}
 	else
 	{
@@ -485,10 +428,10 @@ void CholeskyDecompositionComplex(long int run)
 				matrix_Gcomplex[k * dimension + i] = matrix_Gcomplex[i * dimension + k] = (matrix_Gcomplex[k * dimension + i] - sum2) / matrix_Gcomplex[k * dimension + k];
 			}
 		}
-
-#if DEBUG
+	}
+	
+	#if DEBUG
 		printf("\nCholesky Decomposition\n~~~~~~~~~~~~~~~~~~~~~~~\n\n");
-
 		printf("\nDecomposed Matrix:\n\n");
 		for(k = 0; k < dimension; k++)
 		{
@@ -498,7 +441,24 @@ void CholeskyDecompositionComplex(long int run)
 				{
 					printf("  \\\\");
 				}
-				printf("(%7.3lf %7.3lfi) ", creal(matrix_Gcomplex[k * dimension + l]), cimag(matrix_Gcomplex[k * dimension + l]));
+				
+				if (circuit_simulation.matrix_sparsity == SPARSE)
+				{
+				      if(l <= k)
+				      {
+					    temp_val = getElementAtComplex(Ncomplex -> L, k, l);
+					    printf("(%7.3lf %7.3lfi) ", creal(temp_val), cimag(temp_val));
+				      }
+				      else
+				      {
+					    temp_val = getElementAtComplex(Ncomplex -> L, l, k);
+					    printf("(%7.3lf %7.3lfi) ", creal(temp_val), cimag(temp_val));
+				      }
+				}
+				else {
+				     printf("(%7.3lf %7.3lfi) ", creal(matrix_Gcomplex[k * dimension + l]), cimag(matrix_Gcomplex[k * dimension + l]));
+				}
+				
 				if(l == k)
 				{
 					printf("  \\\\");
@@ -509,15 +469,14 @@ void CholeskyDecompositionComplex(long int run)
 		}
 
 		printf("\n\n");
-
 #endif
-	}
 
 }
 
 void interchange(int from, int to)
 {
-	int j, dimension, temp3;
+	int j, temp3;
+	unsigned int dimension;
 	double temp;
 
 	if (from == to)
@@ -525,7 +484,7 @@ void interchange(int from, int to)
 		return;
 	}
 
-	dimension = number_of_nodes + group2_elements;
+	dimension = circuit_simulation.number_of_nodes + circuit_simulation.group2_elements;
 
 #pragma omp parallel for default(shared) private(j, temp)
 	for (j = 0; j < dimension; j++)
@@ -543,7 +502,8 @@ void interchange(int from, int to)
 
 void interchangeComplex(int from, int to)
 {
-	int j, dimension, temp3;
+	int j, temp3;
+	unsigned int dimension;
 	double complex temp;
 
 	if (from == to)
@@ -551,7 +511,7 @@ void interchangeComplex(int from, int to)
 		return;
 	}
 
-	dimension = number_of_nodes + group2_elements;
+	dimension = circuit_simulation.number_of_nodes + circuit_simulation.group2_elements;
 
 #pragma omp parallel for default(shared) private(j, temp)
 	for (j = 0; j < dimension; j++)
@@ -569,10 +529,11 @@ void interchangeComplex(int from, int to)
 
 void forward_substitution(void)
 {
-	int dimension, k, j;
+	int k, j;
 	double a, *vector_temp = NULL;
+	unsigned int dimension;
 
-	dimension = number_of_nodes + group2_elements;
+	dimension = circuit_simulation.number_of_nodes + circuit_simulation.group2_elements;
 
 	vector_y = ( double * ) calloc( dimension, sizeof(double) );
 	vector_temp = ( double * ) malloc( dimension * sizeof(double) );
@@ -623,10 +584,11 @@ void forward_substitution(void)
 
 void forward_substitution_Complex(void)
 {
-       int dimension, k, j;
+        unsigned int dimension;
+        int k, j;
 	double complex a, *vector_temp_complex = NULL;
 
-	dimension = number_of_nodes + group2_elements;
+	dimension = circuit_simulation.number_of_nodes + circuit_simulation.group2_elements;
 
 	vector_y_complex = ( double complex * ) calloc( dimension, sizeof(double complex) );
 	vector_temp_complex = ( double complex * ) malloc( dimension * sizeof(double complex) );
@@ -677,10 +639,11 @@ void forward_substitution_Complex(void)
 
 void backward_substitution(void)
 {
-	int dimension, k, j;
+	unsigned int dimension;
+	int k, j;
 	double a;
 
-	dimension = number_of_nodes + group2_elements;
+	dimension = circuit_simulation.number_of_nodes + circuit_simulation.group2_elements;
 
 	memset( vector_x, 0, dimension * sizeof(double) );
 
@@ -702,10 +665,11 @@ void backward_substitution(void)
 
 void backward_substitution_Complex(void)
 {
-	int dimension, k, j;
+	unsigned int dimension;
+	int k, j;
 	double complex a;
 
-	dimension = number_of_nodes + group2_elements;
+	dimension = circuit_simulation.number_of_nodes + circuit_simulation.group2_elements;
 
 	memset( vector_x_complex, 0, dimension * sizeof(double complex) );
 
@@ -726,15 +690,18 @@ void backward_substitution_Complex(void)
 
 void solve_direct_methods()
 {
-	int dimension, k;
+	unsigned int dimension;
+#if DEBUG
+	int k;
+#endif
 	double *vector_temp = NULL;
 
 	//printf("\n\nSolving (Forward/Backward) ...\n\n");
+	
+	dimension = circuit_simulation.number_of_nodes + circuit_simulation.group2_elements;
 
 	if (circuit_simulation.matrix_sparsity == SPARSE)
 	{
-		dimension = number_of_nodes + group2_elements;
-
 		vector_temp = ( double * ) calloc( dimension, sizeof(double) );
 
 		if (vector_temp == NULL)
@@ -784,15 +751,18 @@ void solve_direct_methods()
 
 void solve_direct_methods_Complex()
 {
-	int dimension, k;
+	unsigned int dimension;
+#if DEBUG
+	int k;
+#endif
 	double complex *vector_temp_complex = NULL;
+	
+	dimension = circuit_simulation.number_of_nodes + circuit_simulation.group2_elements;
 
 	//printf("\n\nSolving (Forward/Backward) ...\n\n");
 
 	if (circuit_simulation.matrix_sparsity == SPARSE)
 	{
-		dimension = number_of_nodes + group2_elements;
-
 		vector_temp_complex = ( double complex * ) calloc( dimension, sizeof(double complex) );
 
 		if (vector_temp_complex == NULL)

@@ -1,0 +1,12 @@
+  V 	1 six 0 3			
+    V2 one 0 0   	
+      R1 one two 450 
+ R2 three four 640 		
+      R3 Three FIVE   1e4		 
+L 1   SIX   three   1e-6  	 	
+ C1 FOUR 0   2e-12		
+  C2 FIVE 0    	2e-12	
+*  comments		
+    M1 five FoUr 0 0 modelname L=45e-9 W=1e-6   	
+    Q1 Four tWo 0 modelname
+.options graph       	 

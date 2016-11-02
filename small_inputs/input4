@@ -1,0 +1,16 @@
+r2 1 2 4
+R1 2 0 2
+I1 0 2 2 pwl(0 2) (1.2 0.1) (1.4 1) (2 0.2) (3 0.4) ac 20 48	
+v1 1 0 3 pulse(3 1 1 0.1 0.4 0.5 2) ac 5 240
+c1 0 1 10
+l1 2 1 5
+*.dc v1 1 3 0.1
+*.plot v0 v1 v2
+*.tran 0.1 3
+*.op
+*.options gnuplotl graph method=be
+*.options sparse
+.ac lin 10 1 1000
+
+
+

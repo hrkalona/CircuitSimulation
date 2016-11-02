@@ -8,7 +8,8 @@ void parseInput(FILE *p_file) {
   twoTerminalsElement *current1 = NULL;
   threeTerminalsElement *current2 = NULL;
   fourTerminalsElement *current3 = NULL;
-  int i, j, k, temp_group2 = 0, temp3;
+  unsigned int i, j, k, temp_group2 = 0;
+  int temp3;
   
      printf("\n\nInf-Uth Spice starting!\n\n");
      
@@ -33,7 +34,7 @@ void parseInput(FILE *p_file) {
 	            exit(-1);
 		}
 		
-		group2_elements++;
+		circuit_simulation.group2_elements++;
 	      
 		current1 -> type = VOLTAGE_SOURCE;
 	    	
@@ -47,7 +48,7 @@ void parseInput(FILE *p_file) {
 		
 		strcpy(current1 -> string_name, temp);
 
-		current1 -> name = ++number_of_elements[VOLTAGE_SOURCE];
+		current1 -> name = ++circuit_simulation.number_of_elements[VOLTAGE_SOURCE];
 		
 		temp = strtok(NULL, "\t ");
 		
@@ -1087,7 +1088,7 @@ void parseInput(FILE *p_file) {
 	            exit(-1);
 		}
 		
-		group1_elements++;
+		circuit_simulation.group1_elements++;
 	      
 		current1 -> type = CURRENT_SOURCE;
 	    	     
@@ -1101,7 +1102,7 @@ void parseInput(FILE *p_file) {
 		
 		strcpy(current1 -> string_name, temp);
 
-		current1 -> name = ++number_of_elements[CURRENT_SOURCE];
+		current1 -> name = ++circuit_simulation.number_of_elements[CURRENT_SOURCE];
 		
 		temp = strtok(NULL, "\t ");
 		
@@ -2129,7 +2130,7 @@ void parseInput(FILE *p_file) {
 	            exit(-1);
 		}
 		
-		group1_elements++;
+		circuit_simulation.group1_elements++;
 	      
 		current1 -> type = RESISTANCE;
 	    
@@ -2143,7 +2144,7 @@ void parseInput(FILE *p_file) {
 		
 		strcpy(current1 -> string_name, temp);
 
-		current1 -> name = ++number_of_elements[RESISTANCE];
+		current1 -> name = ++circuit_simulation.number_of_elements[RESISTANCE];
 		
 		temp = strtok(NULL, "\t ");
 		
@@ -2221,7 +2222,7 @@ void parseInput(FILE *p_file) {
 	            exit(-1);
 		}
 		
-		group1_elements++;
+		circuit_simulation.group1_elements++;
 	      
 		current1 -> type = CAPACITOR;
 	    
@@ -2235,7 +2236,7 @@ void parseInput(FILE *p_file) {
 		
 		strcpy(current1 -> string_name, temp);
 
-		current1 -> name = ++number_of_elements[CAPACITOR];
+		current1 -> name = ++circuit_simulation.number_of_elements[CAPACITOR];
 		
 		temp = strtok(NULL, "\t ");
 		
@@ -2312,7 +2313,7 @@ void parseInput(FILE *p_file) {
 	            exit(-1);
 		}
 		
-		group2_elements++;
+		circuit_simulation.group2_elements++;
 	      
 		current1 -> type = INDUCTOR;
 	    
@@ -2326,7 +2327,7 @@ void parseInput(FILE *p_file) {
 		
 		strcpy(current1 -> string_name, temp);
 
-		current1 -> name = ++number_of_elements[INDUCTOR];
+		current1 -> name = ++circuit_simulation.number_of_elements[INDUCTOR];
 		
 		temp = strtok(NULL, "\t ");
 		
@@ -2407,7 +2408,7 @@ void parseInput(FILE *p_file) {
 	   	      
 		strcpy(current1 -> string_name, strtok(line + i + 1, "\t "));
 		
-		current1 -> name = ++number_of_elements[DIODE];
+		current1 -> name = ++circuit_simulation.number_of_elements[DIODE];
 	   	      
 		current1 -> positive_terminal = insert_node(strtok(NULL, "\t "));
 	      
@@ -2450,7 +2451,7 @@ void parseInput(FILE *p_file) {
 		 	      
 		strcpy(current2 -> string_name, strtok(line + i + 1, "\t "));
 		
-		current2 -> name = ++number_of_elements[BJT];
+		current2 -> name = ++circuit_simulation.number_of_elements[BJT];
 			      
 		current2 -> c_terminal = insert_node(strtok(NULL, "\t "));
 			      
@@ -2491,7 +2492,7 @@ void parseInput(FILE *p_file) {
 		  	      
 		strcpy(current3 -> string_name, strtok(line + i + 1, "\t "));
 		
-		current3 -> name = ++number_of_elements[MOS];
+		current3 -> name = ++circuit_simulation.number_of_elements[MOS];
 	      
 		current3 -> d_terminal = insert_node(strtok(NULL, "\t "));
 	      
@@ -2585,18 +2586,14 @@ void parseInput(FILE *p_file) {
 			    }
 			
 			    if(!strcasecmp(temp, "TR")) {
-				circuit_simulation.transient_analysis_settings.diff_method = TRAPEZOIDAL;
+				circuit_simulation.diff_method = TRAPEZOIDAL;
 				printf("Options: Trapezoidal Method Activated.\n");
 			      
 			    }
 			    else if(!strcasecmp(temp, "BE")) {
-				circuit_simulation.transient_analysis_settings.diff_method = BACKWARD_EULER;
+				circuit_simulation.diff_method = BACKWARD_EULER;
 				printf("Options: Backward Euler Method Activated.\n");
 			    }
-			    /*else if(!strcasecmp(temp, "FE")) {
-				circuit_simulation.transient_analysis_settings.diff_method = FORWARD_EULER;
-				printf("Options: Forward Euler Method Activated.\n");
-			    }*/
 			    else {
 				printf("Cannot parse line %d.\n", counter);
 			        printf("Terminating.\n");
@@ -2631,6 +2628,42 @@ void parseInput(FILE *p_file) {
 			exit(-1);
 		    }
 		    
+		    if(circuit_simulation.number_of_sweeps == 0)
+		    {
+		        circuit_simulation.dc_sweep_settings = (dcSweep *)malloc(sizeof(dcSweep));		
+			
+			if(circuit_simulation.dc_sweep_settings == NULL) {
+			    printf("Could not allocate memory.\n");
+			    printf("Terminating.\n");
+			    exit(-1);
+			}
+			
+			(circuit_simulation.dc_sweep_settings + circuit_simulation.number_of_sweeps)->dc_sweep = SWEEP_OFF;
+			(circuit_simulation.dc_sweep_settings + circuit_simulation.number_of_sweeps)->dc_sweep_start = 0;
+			(circuit_simulation.dc_sweep_settings + circuit_simulation.number_of_sweeps)->dc_sweep_end = 0;
+			(circuit_simulation.dc_sweep_settings + circuit_simulation.number_of_sweeps)->dc_sweep_step = 0;
+			(circuit_simulation.dc_sweep_settings + circuit_simulation.number_of_sweeps)->dc_sweep_index1 = -1;
+			(circuit_simulation.dc_sweep_settings + circuit_simulation.number_of_sweeps)->dc_sweep_index2 = -1;
+			
+		    }
+		    else {
+		        circuit_simulation.dc_sweep_settings = (dcSweep *)realloc(circuit_simulation.dc_sweep_settings, (circuit_simulation.number_of_sweeps + 1) * sizeof(dcSweep));
+			
+			if(circuit_simulation.dc_sweep_settings == NULL) {
+			    printf("Could not allocate memory.\n");
+			    printf("Terminating.\n");
+			    exit(-1);
+			}
+			
+			(circuit_simulation.dc_sweep_settings + circuit_simulation.number_of_sweeps)->dc_sweep = SWEEP_OFF;
+			(circuit_simulation.dc_sweep_settings + circuit_simulation.number_of_sweeps)->dc_sweep_start = 0;
+			(circuit_simulation.dc_sweep_settings + circuit_simulation.number_of_sweeps)->dc_sweep_end = 0;
+			(circuit_simulation.dc_sweep_settings + circuit_simulation.number_of_sweeps)->dc_sweep_step = 0;
+			(circuit_simulation.dc_sweep_settings + circuit_simulation.number_of_sweeps)->dc_sweep_index1 = -1;
+			(circuit_simulation.dc_sweep_settings + circuit_simulation.number_of_sweeps)->dc_sweep_index2 = -1;
+			
+		    }
+		    
 		    switch (temp[0]) {
 		        case 'V':
 		        case 'v':
@@ -2655,8 +2688,8 @@ void parseInput(FILE *p_file) {
 				}
 			    }
 			    
-			    circuit_simulation.dc_sweep_settings.dc_sweep_index1 = -1;
-                           circuit_simulation.dc_sweep_settings.dc_sweep_index2 = -1;
+			    (circuit_simulation.dc_sweep_settings + circuit_simulation.number_of_sweeps)->dc_sweep_index1 = -1;
+                           (circuit_simulation.dc_sweep_settings + circuit_simulation.number_of_sweeps)->dc_sweep_index2 = -1;
 			    
 			    if(current1 == NULL) {
 			        printf("\n\nThe element, V%s does not exist, at line %d.\n", temp, counter);
@@ -2664,8 +2697,8 @@ void parseInput(FILE *p_file) {
 		                exit(-1); 
 			    }
 			    
-			    circuit_simulation.dc_sweep_settings.dc_sweep = SWEEP_VOLTAGE_SOURCE;
-			    circuit_simulation.dc_sweep_settings.dc_sweep_index1 = temp_group2 - 1;
+			    (circuit_simulation.dc_sweep_settings + circuit_simulation.number_of_sweeps)->dc_sweep = SWEEP_VOLTAGE_SOURCE;
+			    (circuit_simulation.dc_sweep_settings + circuit_simulation.number_of_sweeps)->dc_sweep_index1 = temp_group2 - 1;
 			    
 			    temp = strtok(NULL, "\t ");
 			    if(temp == NULL || temp[0] == 13) {
@@ -2673,7 +2706,7 @@ void parseInput(FILE *p_file) {
 				printf("Terminating.\n");
 				exit(-1);
 			    }
-			    circuit_simulation.dc_sweep_settings.dc_sweep_start = invalid_number_checker(temp);
+			    (circuit_simulation.dc_sweep_settings + circuit_simulation.number_of_sweeps)->dc_sweep_start = invalid_number_checker(temp);
 			    
 			    temp = strtok(NULL, "\t ");
 			    if(temp == NULL || temp[0] == 13) {
@@ -2681,7 +2714,7 @@ void parseInput(FILE *p_file) {
 				printf("Terminating.\n");
 				exit(-1);
 			    }
-                            circuit_simulation.dc_sweep_settings.dc_sweep_end = invalid_number_checker(temp);
+                           (circuit_simulation.dc_sweep_settings + circuit_simulation.number_of_sweeps)->dc_sweep_end = invalid_number_checker(temp);
 			    
 			    temp = strtok(NULL, "\t \n");
 			    if(temp == NULL || temp[0] == 13) {
@@ -2689,7 +2722,7 @@ void parseInput(FILE *p_file) {
 				printf("Terminating.\n");
 				exit(-1);
 			    }
-                            circuit_simulation.dc_sweep_settings.dc_sweep_step = invalid_number_checker(temp);
+                           (circuit_simulation.dc_sweep_settings + circuit_simulation.number_of_sweeps)->dc_sweep_step = invalid_number_checker(temp);
 			    
 			    temp = strtok(NULL, "\t \n");
 			    
@@ -2699,33 +2732,33 @@ void parseInput(FILE *p_file) {
 				exit(-1);
 			    }
 			    
-			    if(circuit_simulation.dc_sweep_settings.dc_sweep_start == circuit_simulation.dc_sweep_settings.dc_sweep_end) {
+			    if((circuit_simulation.dc_sweep_settings + circuit_simulation.number_of_sweeps)->dc_sweep_start == (circuit_simulation.dc_sweep_settings + circuit_simulation.number_of_sweeps)->dc_sweep_end) {
 			        printf("\n\nThe start and stop value must no be equal, at line %d.\n", counter);
 		                printf("Terminating.\n");
 		                exit(-1); 
 			    }
 			    			    
-			    if(circuit_simulation.dc_sweep_settings.dc_sweep_step == 0) {
+			    if((circuit_simulation.dc_sweep_settings + circuit_simulation.number_of_sweeps)->dc_sweep_step == 0) {
 			        printf("\n\nThe sweep step must not be 0, at line %d.\n", counter);
 		                printf("Terminating.\n");
 		                exit(-1); 
 			    }
 			    
-			    if(circuit_simulation.dc_sweep_settings.dc_sweep_start < circuit_simulation.dc_sweep_settings.dc_sweep_end && circuit_simulation.dc_sweep_settings.dc_sweep_step < 0) {
+			    if((circuit_simulation.dc_sweep_settings + circuit_simulation.number_of_sweeps)->dc_sweep_start < (circuit_simulation.dc_sweep_settings + circuit_simulation.number_of_sweeps)->dc_sweep_end && (circuit_simulation.dc_sweep_settings + circuit_simulation.number_of_sweeps)->dc_sweep_step < 0) {
 			        printf("\n\nThe sweep step must be greater than zero, at line %d.\n", counter);
 		                printf("Terminating.\n");
 		                exit(-1); 
 			    }
 			    
-			    if(circuit_simulation.dc_sweep_settings.dc_sweep_start > circuit_simulation.dc_sweep_settings.dc_sweep_end && circuit_simulation.dc_sweep_settings.dc_sweep_step > 0) {
+			    if((circuit_simulation.dc_sweep_settings + circuit_simulation.number_of_sweeps)->dc_sweep_start > (circuit_simulation.dc_sweep_settings + circuit_simulation.number_of_sweeps)->dc_sweep_end && (circuit_simulation.dc_sweep_settings + circuit_simulation.number_of_sweeps)->dc_sweep_step > 0) {
 			        printf("\n\nThe sweep step must be less than zero, at line %d.\n", counter);
 		                printf("Terminating.\n");
 		                exit(-1); 
 			    }
 			    
-			    circuit_simulation.dc_sweep_settings.sweep_name[0] = '\0';
-			    strcat(circuit_simulation.dc_sweep_settings.sweep_name, "V ");
-			    strcat(circuit_simulation.dc_sweep_settings.sweep_name, current1 -> string_name);
+			    (circuit_simulation.dc_sweep_settings + circuit_simulation.number_of_sweeps)->sweep_name[0] = '\0';
+			    strcat((circuit_simulation.dc_sweep_settings + circuit_simulation.number_of_sweeps)->sweep_name, "V ");
+			    strcat((circuit_simulation.dc_sweep_settings + circuit_simulation.number_of_sweeps)->sweep_name, current1 -> string_name);
 	
 			    break;
 			  
@@ -2749,8 +2782,8 @@ void parseInput(FILE *p_file) {
 				}
 			    }
 			    
-			    circuit_simulation.dc_sweep_settings.dc_sweep_index1 = -1;
-                           circuit_simulation.dc_sweep_settings.dc_sweep_index2 = -1;
+			    (circuit_simulation.dc_sweep_settings + circuit_simulation.number_of_sweeps)->dc_sweep_index1 = -1;
+                           (circuit_simulation.dc_sweep_settings + circuit_simulation.number_of_sweeps)->dc_sweep_index2 = -1;
 			    
 			    if(current1 == NULL) {
 			        printf("\n\nThe element, I%s does not exist, at line %d.\n", temp, counter);
@@ -2758,14 +2791,14 @@ void parseInput(FILE *p_file) {
 		                exit(-1); 
 			    }
 			    
-			    circuit_simulation.dc_sweep_settings.dc_sweep = SWEEP_CURRENT_SOURCE;
+			    (circuit_simulation.dc_sweep_settings + circuit_simulation.number_of_sweeps)->dc_sweep = SWEEP_CURRENT_SOURCE;
 			    
 			    if(current1 -> positive_terminal) {
-		                 circuit_simulation.dc_sweep_settings.dc_sweep_index1 = current1 -> positive_terminal - 1;
+		                 (circuit_simulation.dc_sweep_settings + circuit_simulation.number_of_sweeps)->dc_sweep_index1 = current1 -> positive_terminal - 1;
 		            }
 		
 		            if(current1 -> negative_terminal) {
-		                 circuit_simulation.dc_sweep_settings.dc_sweep_index2 = current1 -> negative_terminal - 1;
+		                 (circuit_simulation.dc_sweep_settings + circuit_simulation.number_of_sweeps)->dc_sweep_index2 = current1 -> negative_terminal - 1;
 		            }
 		            
 		            temp = strtok(NULL, "\t ");
@@ -2774,7 +2807,7 @@ void parseInput(FILE *p_file) {
 				printf("Terminating.\n");
 				exit(-1);
 			    }
-			    circuit_simulation.dc_sweep_settings.dc_sweep_start = invalid_number_checker(temp);
+			    (circuit_simulation.dc_sweep_settings + circuit_simulation.number_of_sweeps)->dc_sweep_start = invalid_number_checker(temp);
 			    
 			    temp = strtok(NULL, "\t ");
 			    if(temp == NULL || temp[0] == 13) {
@@ -2782,7 +2815,7 @@ void parseInput(FILE *p_file) {
 				printf("Terminating.\n");
 				exit(-1);
 			    }
-                            circuit_simulation.dc_sweep_settings.dc_sweep_end = invalid_number_checker(temp);
+                           (circuit_simulation.dc_sweep_settings + circuit_simulation.number_of_sweeps)->dc_sweep_end = invalid_number_checker(temp);
 			    
 			    temp = strtok(NULL, "\t \n");
 			    if(temp == NULL || temp[0] == 13) {
@@ -2790,7 +2823,7 @@ void parseInput(FILE *p_file) {
 				printf("Terminating.\n");
 				exit(-1);
 			    }
-                            circuit_simulation.dc_sweep_settings.dc_sweep_step = invalid_number_checker(temp);
+                           (circuit_simulation.dc_sweep_settings + circuit_simulation.number_of_sweeps)->dc_sweep_step = invalid_number_checker(temp);
 			    
 			    temp = strtok(NULL, "\t \n");
 			    
@@ -2800,33 +2833,33 @@ void parseInput(FILE *p_file) {
 				exit(-1);
 			    }			    
 			    
-			    if(circuit_simulation.dc_sweep_settings.dc_sweep_start == circuit_simulation.dc_sweep_settings.dc_sweep_end) {
+			    if((circuit_simulation.dc_sweep_settings + circuit_simulation.number_of_sweeps)->dc_sweep_start == (circuit_simulation.dc_sweep_settings + circuit_simulation.number_of_sweeps)->dc_sweep_end) {
 			        printf("\n\nThe start and stop value must not be equal, at line %d.\n", counter);
 		                printf("Terminating.\n");
 		                exit(-1); 
 			    }
 			    
-			    if(circuit_simulation.dc_sweep_settings.dc_sweep_step == 0) {
+			    if((circuit_simulation.dc_sweep_settings + circuit_simulation.number_of_sweeps)->dc_sweep_step == 0) {
 			        printf("\n\nThe sweep step must not be 0, at line %d.\n", counter);
 		                printf("Terminating.\n");
 		                exit(-1); 
 			    }			    
 			    
-			    if(circuit_simulation.dc_sweep_settings.dc_sweep_start < circuit_simulation.dc_sweep_settings.dc_sweep_end && circuit_simulation.dc_sweep_settings.dc_sweep_step < 0) {
+			    if((circuit_simulation.dc_sweep_settings + circuit_simulation.number_of_sweeps)->dc_sweep_start < (circuit_simulation.dc_sweep_settings + circuit_simulation.number_of_sweeps)->dc_sweep_end && (circuit_simulation.dc_sweep_settings + circuit_simulation.number_of_sweeps)->dc_sweep_step < 0) {
 			        printf("\n\nThe sweep step must be greater than zero, at line %d.\n", counter);
 		                printf("Terminating.\n");
 		                exit(-1); 
 			    }
 			    
-			    if(circuit_simulation.dc_sweep_settings.dc_sweep_start > circuit_simulation.dc_sweep_settings.dc_sweep_end && circuit_simulation.dc_sweep_settings.dc_sweep_step > 0) {
+			    if((circuit_simulation.dc_sweep_settings + circuit_simulation.number_of_sweeps)->dc_sweep_start > (circuit_simulation.dc_sweep_settings + circuit_simulation.number_of_sweeps)->dc_sweep_end && (circuit_simulation.dc_sweep_settings + circuit_simulation.number_of_sweeps)->dc_sweep_step > 0) {
 			        printf("\n\nThe sweep step must be less than zero, at line %d.\n", counter);
 		                printf("Terminating.\n");
 		                exit(-1); 
 			    }
 			    
-			    circuit_simulation.dc_sweep_settings.sweep_name[0] = '\0';
-			    strcat(circuit_simulation.dc_sweep_settings.sweep_name, "I ");
-			    strcat(circuit_simulation.dc_sweep_settings.sweep_name, current1 -> string_name);
+			    (circuit_simulation.dc_sweep_settings + circuit_simulation.number_of_sweeps)->sweep_name[0] = '\0';
+			    strcat((circuit_simulation.dc_sweep_settings + circuit_simulation.number_of_sweeps)->sweep_name, "I ");
+			    strcat((circuit_simulation.dc_sweep_settings + circuit_simulation.number_of_sweeps)->sweep_name, current1 -> string_name);
                
 			    break;			    
 			  
@@ -2836,6 +2869,8 @@ void parseInput(FILE *p_file) {
 		             exit(-1);
 		      
 		    }
+		    
+		    circuit_simulation.number_of_sweeps++;
 		}
 		else if(!strcasecmp(temp, "PLOT") || !strcasecmp(temp, "PRINT")) {
 		  
@@ -2906,10 +2941,10 @@ void parseInput(FILE *p_file) {
 		        temp = strtok(NULL, "\t \n");
 			
 			if(!strcasecmp(temp, "LINEAR")) {
-			    circuit_simulation.ac_analysis_settings.plot_scale = LINEAR;
+			    circuit_simulation.ac_plot_scale = LINEAR;
 			}
 			else if(!strcasecmp(temp, "DB")) {
-			    circuit_simulation.ac_analysis_settings.plot_scale = DB;
+			    circuit_simulation.ac_plot_scale = DB;
 			}
 			else {
 			    printf("Expecting plot scale mode (LINEAR or DB), at line %d.\n", counter);
@@ -2950,7 +2985,33 @@ void parseInput(FILE *p_file) {
 		    }  
 		}
 		else if(!strcasecmp(temp, "TRAN")) {
-		    circuit_simulation.transient_analysis_settings.transient_analysis = ENABLED;
+		  
+		     if(circuit_simulation.number_of_transient_analysis == 0)
+		     {
+			    circuit_simulation.transient_analysis_settings = (transientAnalysis *)malloc(sizeof(transientAnalysis));		
+			    
+			    if(circuit_simulation.transient_analysis_settings == NULL) {
+				printf("Could not allocate memory.\n");
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			    
+			    (circuit_simulation.transient_analysis_settings + circuit_simulation.number_of_transient_analysis)->time_step = 0;
+			    (circuit_simulation.transient_analysis_settings + circuit_simulation.number_of_transient_analysis)->fin_time = 0;
+			    
+	            }
+		    else {
+			    circuit_simulation.transient_analysis_settings = (transientAnalysis  *)realloc(circuit_simulation.transient_analysis_settings, (circuit_simulation.number_of_transient_analysis + 1) * sizeof(transientAnalysis ));
+			    
+			    if(circuit_simulation.transient_analysis_settings == NULL) {
+				printf("Could not allocate memory.\n");
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			    
+			    (circuit_simulation.transient_analysis_settings + circuit_simulation.number_of_transient_analysis)->time_step = 0;
+			    (circuit_simulation.transient_analysis_settings + circuit_simulation.number_of_transient_analysis)->fin_time = 0;
+		    }
 		    
 		    temp = strtok(NULL, "\t \n");
 		    if(temp == NULL || temp[0] == 13) {
@@ -2958,7 +3019,7 @@ void parseInput(FILE *p_file) {
 			printf("Terminating.\n");
 			exit(-1);
 		    }
-		    circuit_simulation.transient_analysis_settings.time_step = invalid_number_checker(temp);
+		    (circuit_simulation.transient_analysis_settings + circuit_simulation.number_of_transient_analysis)->time_step = invalid_number_checker(temp);
 		    
 		    temp = strtok(NULL, "\t \n");
 		    if(temp == NULL || temp[0] == 13) {
@@ -2966,7 +3027,7 @@ void parseInput(FILE *p_file) {
 			printf("Terminating.\n");
 			exit(-1);
 		    }
-                    circuit_simulation.transient_analysis_settings.fin_time = invalid_number_checker(temp);
+                    (circuit_simulation.transient_analysis_settings + circuit_simulation.number_of_transient_analysis)->fin_time = invalid_number_checker(temp);
 		    
 		    temp = strtok(NULL, "\t \n");
 			    
@@ -2976,27 +3037,60 @@ void parseInput(FILE *p_file) {
 			exit(-1);
 		    }		
 		    
-		    if( circuit_simulation.transient_analysis_settings.time_step <= 0) {
+		    if( (circuit_simulation.transient_analysis_settings + circuit_simulation.number_of_transient_analysis)->time_step <= 0) {
 			 printf("\n\nThe time step must be greater than 0, at line %d.\n", counter);
 		         printf("Terminating.\n");
 		         exit(-1); 
 		    }
 		    
-		    if( circuit_simulation.transient_analysis_settings.fin_time <= 0) {
+		    if( (circuit_simulation.transient_analysis_settings + circuit_simulation.number_of_transient_analysis)->fin_time <= 0) {
 			 printf("\n\nThe finish time must be greater than 0, at line %d.\n", counter);
 		         printf("Terminating.\n");
 		         exit(-1); 
 		    }
 		    
-		    if( circuit_simulation.transient_analysis_settings.time_step >=  circuit_simulation.transient_analysis_settings.fin_time) {
+		    if( (circuit_simulation.transient_analysis_settings + circuit_simulation.number_of_transient_analysis)->time_step >=  (circuit_simulation.transient_analysis_settings + circuit_simulation.number_of_transient_analysis)->fin_time) {
 			printf("\n\nThe time step must lower than finish time, at line %d.\n", counter);
 		        printf("Terminating.\n");
 		        exit(-1); 
 		    }
+		    
+		    circuit_simulation.number_of_transient_analysis++;
 	
 		}
 		else if(!strcasecmp(temp, "AC")) {
-		    circuit_simulation.ac_analysis_settings.ac_analysis = ENABLED;
+		  
+		     if(circuit_simulation.number_of_ac_analysis == 0)
+		     {
+			    circuit_simulation.ac_analysis_settings = (acAnalysis *)malloc(sizeof(acAnalysis));		
+			    
+			    if(circuit_simulation.ac_analysis_settings == NULL) {
+				printf("Could not allocate memory.\n");
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			    
+			    (circuit_simulation.ac_analysis_settings + circuit_simulation.number_of_ac_analysis)->scale = LIN;
+			    (circuit_simulation.ac_analysis_settings + circuit_simulation.number_of_ac_analysis)->points = 0;
+			    (circuit_simulation.ac_analysis_settings + circuit_simulation.number_of_ac_analysis)->start_freq = 0;
+			    (circuit_simulation.ac_analysis_settings + circuit_simulation.number_of_ac_analysis)->end_freq = 0;	
+			    
+	            }
+		    else {
+			    circuit_simulation.ac_analysis_settings = (acAnalysis *)realloc(circuit_simulation.ac_analysis_settings, (circuit_simulation.number_of_ac_analysis + 1) * sizeof(acAnalysis));
+			    
+			    if(circuit_simulation.ac_analysis_settings == NULL) {
+				printf("Could not allocate memory.\n");
+				printf("Terminating.\n");
+				exit(-1);
+			    }
+			    
+			    (circuit_simulation.ac_analysis_settings + circuit_simulation.number_of_ac_analysis)->scale = LIN;
+			    (circuit_simulation.ac_analysis_settings + circuit_simulation.number_of_ac_analysis)->points = 0;
+			    (circuit_simulation.ac_analysis_settings + circuit_simulation.number_of_ac_analysis)->start_freq = 0;
+			    (circuit_simulation.ac_analysis_settings + circuit_simulation.number_of_ac_analysis)->end_freq = 0;
+		    
+		    }
 		    
 		    temp = strtok(NULL, "\t \n");
 		    if(temp == NULL || temp[0] == 13) {
@@ -3012,10 +3106,10 @@ void parseInput(FILE *p_file) {
 		    }
 		    
 		    if(!strcasecmp(temp, "LIN")) {
-		        circuit_simulation.ac_analysis_settings.scale = LIN;
+		        (circuit_simulation.ac_analysis_settings + circuit_simulation.number_of_ac_analysis)->scale = LIN;
 		    }
 		    else if(!strcasecmp(temp, "LOG")) {
-		        circuit_simulation.ac_analysis_settings.scale = LOG;
+		        (circuit_simulation.ac_analysis_settings + circuit_simulation.number_of_ac_analysis)->scale = LOG;
 		    }
 		    else {
 		        printf("Invalid scale found at line %d.\n", counter);
@@ -3029,7 +3123,7 @@ void parseInput(FILE *p_file) {
 			printf("Terminating.\n");
 			exit(-1);
 		    }
-                    circuit_simulation.ac_analysis_settings.points = invalid_number_checker(temp);
+                   (circuit_simulation.ac_analysis_settings + circuit_simulation.number_of_ac_analysis)->points = invalid_number_checker(temp);
 		    
 		    temp = strtok(NULL, "\t \n");
 		    if(temp == NULL || temp[0] == 13) {
@@ -3037,7 +3131,7 @@ void parseInput(FILE *p_file) {
 			printf("Terminating.\n");
 			exit(-1);
 		    }
-                    circuit_simulation.ac_analysis_settings.start_freq = invalid_number_checker(temp);
+                   (circuit_simulation.ac_analysis_settings + circuit_simulation.number_of_ac_analysis)->start_freq = invalid_number_checker(temp);
 		    
 		    temp = strtok(NULL, "\t \n");
 		    if(temp == NULL || temp[0] == 13) {
@@ -3045,7 +3139,7 @@ void parseInput(FILE *p_file) {
 			printf("Terminating.\n");
 			exit(-1);
 		    }
-                    circuit_simulation.ac_analysis_settings.end_freq = invalid_number_checker(temp);
+                   (circuit_simulation.ac_analysis_settings + circuit_simulation.number_of_ac_analysis)->end_freq = invalid_number_checker(temp);
 		    
 		    temp = strtok(NULL, "\t \n");
 			    
@@ -3055,29 +3149,31 @@ void parseInput(FILE *p_file) {
 			exit(-1);
 		    }
 		    
-		    if( circuit_simulation.ac_analysis_settings.points <= 0) {
+		    if( (circuit_simulation.ac_analysis_settings + circuit_simulation.number_of_ac_analysis)->points <= 0) {
 			 printf("\n\nPoints must be greater than 0, at line %d.\n", counter);
 		         printf("Terminating.\n");
 		         exit(-1); 
 		    }
 		    
-		    if( circuit_simulation.ac_analysis_settings.start_freq < 0) {
+		    if( (circuit_simulation.ac_analysis_settings + circuit_simulation.number_of_ac_analysis)->start_freq < 0) {
 			 printf("\n\nStarting frequency must be greater than -1, at line %d.\n", counter);
 		         printf("Terminating.\n");
 		         exit(-1); 
 		    }
 		    
-		    if( circuit_simulation.ac_analysis_settings.end_freq < 0) {
+		    if( (circuit_simulation.ac_analysis_settings + circuit_simulation.number_of_ac_analysis)->end_freq < 0) {
 			 printf("\n\nEnding frequency must be greater than -1, at line %d.\n", counter);
 		         printf("Terminating.\n");
 		         exit(-1); 
 		    }
 		   		    
-		    if( circuit_simulation.ac_analysis_settings.end_freq <=  circuit_simulation.ac_analysis_settings.start_freq) {
+		    if( (circuit_simulation.ac_analysis_settings + circuit_simulation.number_of_ac_analysis)->end_freq <=  (circuit_simulation.ac_analysis_settings + circuit_simulation.number_of_ac_analysis)->start_freq) {
 			printf("\n\nThe starting frequency must be lower than the ending frequency, at line %d.\n", counter);
 		        printf("Terminating.\n");
 		        exit(-1); 
 		    }
+		    
+		    circuit_simulation.number_of_ac_analysis++;
 	
 		}
 		else if(!strcasecmp(temp, "OP")) {
@@ -3111,38 +3207,38 @@ void parseInput(FILE *p_file) {
 
     printf("\n\nParsing results. The circuit contains:\n\n");
 
-    printf("          Nodes: %7d\n", number_of_nodes + 1);
+    printf("          Nodes: %7d\n", circuit_simulation.number_of_nodes + 1);
     
-    if(number_of_elements[VOLTAGE_SOURCE]) {
-	printf("Voltage Sources: %7d\n", number_of_elements[VOLTAGE_SOURCE]);
+    if(circuit_simulation.number_of_elements[VOLTAGE_SOURCE]) {
+	printf("Voltage Sources: %7d\n", circuit_simulation.number_of_elements[VOLTAGE_SOURCE]);
     }
     
-    if(number_of_elements[CURRENT_SOURCE]) {
-	printf("Current Sources: %7d\n", number_of_elements[CURRENT_SOURCE]);
+    if(circuit_simulation.number_of_elements[CURRENT_SOURCE]) {
+	printf("Current Sources: %7d\n", circuit_simulation.number_of_elements[CURRENT_SOURCE]);
     }
     
-    if(number_of_elements[RESISTANCE]) {
-	printf("    Resistances: %7d\n", number_of_elements[RESISTANCE]);
+    if(circuit_simulation.number_of_elements[RESISTANCE]) {
+	printf("    Resistances: %7d\n", circuit_simulation.number_of_elements[RESISTANCE]);
     }
     
-    if(number_of_elements[CAPACITOR]) {
-	printf("     Capacitors: %7d\n", number_of_elements[CAPACITOR]);
+    if(circuit_simulation.number_of_elements[CAPACITOR]) {
+	printf("     Capacitors: %7d\n", circuit_simulation.number_of_elements[CAPACITOR]);
     }
     
-    if(number_of_elements[INDUCTOR]) {
-	printf("      Inductors: %7d\n", number_of_elements[INDUCTOR]);
+    if(circuit_simulation.number_of_elements[INDUCTOR]) {
+	printf("      Inductors: %7d\n", circuit_simulation.number_of_elements[INDUCTOR]);
     }
     
-    if(number_of_elements[DIODE]) {
-	printf("         Diodes: %7d\n", number_of_elements[DIODE]);
+    if(circuit_simulation.number_of_elements[DIODE]) {
+	printf("         Diodes: %7d\n", circuit_simulation.number_of_elements[DIODE]);
     }
     
-    if(number_of_elements[BJT]) {
-	printf("BJT Transistors: %7d\n", number_of_elements[BJT]);
+    if(circuit_simulation.number_of_elements[BJT]) {
+	printf("BJT Transistors: %7d\n", circuit_simulation.number_of_elements[BJT]);
     }
     
-    if(number_of_elements[MOS]) {
-	printf("MOS Transistors: %7d\n", number_of_elements[MOS]);
+    if(circuit_simulation.number_of_elements[MOS]) {
+	printf("MOS Transistors: %7d\n", circuit_simulation.number_of_elements[MOS]);
     }
     
     printf("\n");

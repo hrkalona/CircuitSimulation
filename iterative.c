@@ -1,8 +1,8 @@
 #include "circuit_simulation.h"
 
 
-void createInversePreconditioner(int length) {
-  int i;
+void createInversePreconditioner(unsigned int length) {
+  unsigned int i;
   double temp;
   
     inv_preconditioner = (double *) malloc(length * sizeof(double));
@@ -28,8 +28,8 @@ void createInversePreconditioner(int length) {
     
 }
 
-void createInversePreconditionerComplex(int length) {
-  int i;
+void createInversePreconditionerComplex(unsigned int length) {
+  unsigned int i;
   double complex temp;
   
     inv_preconditioner_complex = (double complex *) malloc(length * sizeof(double complex));
@@ -56,8 +56,8 @@ void createInversePreconditionerComplex(int length) {
 }
 
 
-inline void solve_diagonal_system(double *vector1, double *vector2, double *result, int length) {
-  int i;
+inline void solve_diagonal_system(double *vector1, double *vector2, double *result, unsigned int length) {
+  unsigned int i;
   
     #pragma omp parallel for default(shared) private(i)
     for(i = 0; i < length; i++) {
@@ -66,8 +66,8 @@ inline void solve_diagonal_system(double *vector1, double *vector2, double *resu
     
 }
 
-inline void solve_diagonal_system_Complex(double complex *vector1, double complex *vector2, double complex *result, int length, int hermitian) {
-  int i;
+inline void solve_diagonal_system_Complex(double complex *vector1, double complex *vector2, double complex *result, unsigned int length, int hermitian) {
+  unsigned int i;
   
     if(hermitian) {
         #pragma omp parallel for default(shared) private(i)
@@ -86,12 +86,15 @@ inline void solve_diagonal_system_Complex(double complex *vector1, double comple
 
 
 void ConjugateGradient(int zero_x) {
-  int dimension, iteration = 0, k;
+#if DEBUG
+  int k;
+#endif
+  unsigned int dimension, iteration = 0;
   double temp = 0, rho = 0, rho1 = 0, beta = 0, alpha = 0, temp3 = 0, omega = 0;
   double *vector_r = NULL, *vector_z = NULL, *vector_p = NULL, *vector_q = NULL;
   int max_iterations;
   
-    dimension = number_of_nodes + group2_elements;
+    dimension = circuit_simulation.number_of_nodes + circuit_simulation.group2_elements;
     
     max_iterations = dimension;
  
@@ -197,13 +200,16 @@ void ConjugateGradient(int zero_x) {
 }
 
 void ConjugateGradientComplex(int zero_x) {
-  int dimension, iteration = 0, k;
+#if DEBUG
+  int k;
+#endif
+  unsigned int dimension, iteration = 0;
   double complex temp = 0, rho = 0, rho1 = 0, beta = 0, alpha = 0, temp3 = 0, omega = 0;
   double complex *vector_r_complex = NULL, *vector_z_complex = NULL, *vector_p_complex = NULL, *vector_q_complex = NULL;
   int max_iterations;
   double complex var0 = 0.0, var1 = 1.0, varminus1 = -1.0, alpha_minus;
   
-    dimension = number_of_nodes + group2_elements;
+    dimension = circuit_simulation.number_of_nodes + circuit_simulation.group2_elements;
     
     max_iterations = dimension;
  
@@ -316,12 +322,15 @@ void ConjugateGradientComplex(int zero_x) {
 
 
 void BiConjugateGradient(int zero_x) {
-  int dimension, iteration = 0, k;
+#if DEBUG
+  int k;
+#endif
+  unsigned int dimension, iteration = 0;
   double temp = 0, rho = 0, rho1 = 0, beta = 0, alpha = 0, temp3 = 0, omega = 0;
   double *vector_r = NULL, *vector_r2 = NULL, *vector_z = NULL, *vector_z2 = NULL, *vector_p = NULL, *vector_p2 = NULL, *vector_q = NULL, *vector_q2 = NULL;
   int max_iterations;
   
-    dimension = number_of_nodes + group2_elements;    
+    dimension = circuit_simulation.number_of_nodes + circuit_simulation.group2_elements;    
     
     max_iterations = 2 * dimension;
  
@@ -459,13 +468,16 @@ void BiConjugateGradient(int zero_x) {
 
 
 void BiConjugateGradientComplex(int zero_x) {
-  int dimension, iteration = 0, k;
+#if DEBUG
+  int k;
+#endif
+  unsigned int dimension, iteration = 0;
   double complex temp = 0, rho = 0, rho1 = 0, beta = 0, alpha = 0, temp3 = 0, omega = 0;
   double complex *vector_r_complex = NULL, *vector_r2_complex = NULL, *vector_z_complex = NULL, *vector_z2_complex = NULL, *vector_p_complex = NULL, *vector_p2_complex = NULL, *vector_q_complex = NULL, *vector_q2_complex = NULL;
   int max_iterations;  
     double complex var0 = 0.0, var1 = 1.0, varminus1 = -1.0, conj_beta, alpha_minus, conj_alpha_minus;
     
-    dimension = number_of_nodes + group2_elements;    
+    dimension = circuit_simulation.number_of_nodes + circuit_simulation.group2_elements;    
     
     max_iterations = 2 * dimension;
  
