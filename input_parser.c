@@ -498,7 +498,15 @@ void parseInput(FILE *p_file) {
 				printf("The first argument of pwl and value must be the same, at line %d.\n", counter);
 				printf("Terminating.\n");
 				exit(-1);
-			    }			    
+			    }
+			    
+			    for(j = 0; j < current1 -> transient -> pwl -> length - 1; j++) {
+				  if( current1 -> transient -> pwl -> t[j] >  current1 -> transient -> pwl -> t[j + 1]) {
+				      printf("The time/value pairs must be in time ascending order, at line %d.\n", counter);
+				      printf("Terminating.\n");
+				      exit(-1);
+				  }
+			    }
 			}
 			else {
 			    printf("Cannot parse line %d.\n", counter);
@@ -1006,6 +1014,14 @@ void parseInput(FILE *p_file) {
 			    printf("The first argument of pwl and value must be the same, at line %d.\n", counter);
 			    printf("Terminating.\n");
 			    exit(-1);
+			}
+			
+			for(j = 0; j < current1 -> transient -> pwl -> length - 1; j++) {
+			    if( current1 -> transient -> pwl -> t[j] >  current1 -> transient -> pwl -> t[j + 1]) {
+				   printf("The time/value pairs must be in time ascending order, at line %d.\n", counter);
+				   printf("Terminating.\n");
+				   exit(-1);
+			    }
 			}
 			
 			if(!strcasecmp(temp, "AC")) {
@@ -1553,6 +1569,14 @@ void parseInput(FILE *p_file) {
 				printf("Terminating.\n");
 				exit(-1);
 			    }
+			    
+			    for(j = 0; j < current1 -> transient -> pwl -> length - 1; j++) {
+				  if( current1 -> transient -> pwl -> t[j] >  current1 -> transient -> pwl -> t[j + 1]) {
+				      printf("The time/value pairs must be in time ascending order, at line %d.\n", counter);
+				      printf("Terminating.\n");
+				      exit(-1);
+				  }
+			    }
 			}
 			else {
 			    printf("Cannot parse line %d.\n", counter);
@@ -2058,6 +2082,14 @@ void parseInput(FILE *p_file) {
 			    printf("The first argument of pwl and value must be the same, at line %d.\n", counter);
 			    printf("Terminating.\n");
 			    exit(-1);
+			}
+			
+			for(j = 0; j < current1 -> transient -> pwl -> length - 1; j++) {
+			    if( current1 -> transient -> pwl -> t[j] >  current1 -> transient -> pwl -> t[j + 1]) {
+				   printf("The time/value pairs must be in time ascending order, at line %d.\n", counter);
+				   printf("Terminating.\n");
+				   exit(-1);
+			    }
 			}
 			
 			if(!strcasecmp(temp, "AC")) {

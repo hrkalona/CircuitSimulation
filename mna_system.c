@@ -466,6 +466,34 @@ void createMnaSystemTransient(int run, double time_step, double fin_time)
 
 		printf("\n\n");
 #endif
+		
+		if (circuit_simulation.matrix_sparsity == SPARSE)
+		{
+			cs_di_spfree( G2 );
+			G2 = temp_mat;  // G = G + C, trapezoidal => G = G + 2/h * C, backward euler => G = G + 1/h * C
+		}
+		else
+		{
+			free( matrix_G );
+			matrix_G = temp_matrix;  // G = G + C, trapezoidal => G = G + 2/h * C, backward euler => G = G + 1/h * C
+		}
+		
+		
+		if (circuit_simulation.diff_method == TRAPEZOIDAL)
+		{
+
+			if (circuit_simulation.matrix_sparsity == SPARSE)
+			{
+				cs_di_spfree( C2 );
+				C2 = temp_mat2;  // C = G - C <=> G = G - 2/h * C
+			}
+			else
+			{
+				free( matrix_C );
+				matrix_C = temp_matrix2;  // C = G - C <=> G = G - 2/h * C
+			}
+
+		}
 	
 
 }

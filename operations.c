@@ -62,7 +62,7 @@ void ACAnalysis(void)
 		  end_freq_decade = log10((circuit_simulation.ac_analysis_settings + ac_analysis_no)->end_freq);
 		  
 		  if(decade - (int)decade != 0) {
-		      temp_decade1 = (int)(decade - 1); //precious decade
+		      temp_decade1 = (int)(decade - 1); //previous decade
 		  }
 		  else {
 		      temp_decade1 = decade; //the number is a decade
@@ -649,6 +649,10 @@ void TransientAnalysis(void)
 	
 	for(transient_analysis_no = 0; transient_analysis_no < circuit_simulation.number_of_transient_analysis; transient_analysis_no++) {
 
+		printf( "\n\nTransient Analysis...\n\n" );
+
+		createMnaSystemTransient(transient_analysis_no, (circuit_simulation.transient_analysis_settings + transient_analysis_no)->time_step, (circuit_simulation.transient_analysis_settings + transient_analysis_no)->fin_time);
+
 		vector_e = ( double * ) malloc( dimension * sizeof(double) );
 
 		if (vector_e == NULL)
@@ -657,22 +661,7 @@ void TransientAnalysis(void)
 			printf( "Terminating.\n" );
 			exit( -1 );
 		}
-
-		printf( "\n\nTransient Analysis...\n\n" );
-
-		createMnaSystemTransient(transient_analysis_no, (circuit_simulation.transient_analysis_settings + transient_analysis_no)->time_step, (circuit_simulation.transient_analysis_settings + transient_analysis_no)->fin_time);
-
-		if (circuit_simulation.matrix_sparsity == SPARSE)
-		{
-			cs_di_spfree( G2 );
-			G2 = temp_mat;  // G = G + C, trapezoidal => G = G + 2/h * C, backward euler => G = G + 1/h * C
-		}
-		else
-		{
-			free( matrix_G );
-			matrix_G = temp_matrix;  // G = G + C, trapezoidal => G = G + 2/h * C, backward euler => G = G + 1/h * C
-		}
-
+		
 		if (circuit_simulation.diff_method == TRAPEZOIDAL)
 		{
 			vector_e_1 = ( double * ) malloc( dimension * sizeof(double) );
@@ -685,17 +674,6 @@ void TransientAnalysis(void)
 			}
 
 			memcpy( vector_e_1, vector_b, dimension * sizeof(double) );  // e_1 = b
-
-			if (circuit_simulation.matrix_sparsity == SPARSE)
-			{
-				cs_di_spfree( C2 );
-				C2 = temp_mat2;  // C = G - C <=> G = G - 2/h * C
-			}
-			else
-			{
-				free( matrix_C );
-				matrix_C = temp_matrix2;  // C = G - C <=> G = G - 2/h * C
-			}
 
 		}
 
@@ -875,14 +853,14 @@ void TransientAnalysis(void)
 
 			}
 
+			DrawProgressBar( 30, (i + 1.0) / length );
+			
 			if (circuit_simulation.diff_method == TRAPEZOIDAL)
 			{
-				DrawProgressBar( 30, (i + 1.0) / length );
 				Trapezoidal( vector_e, vector_e_1 );
 			}
-			else if (circuit_simulation.diff_method == BACKWARD_EULER)
-			{
-				DrawProgressBar( 30, (i + 1.0) / length );
+			else
+			{			
 				BackwardEuler( vector_e );
 			}
 
@@ -1099,7 +1077,6 @@ void DCSweep(void)
 	      sprintf(file_name, "DC_Sweep%d.txt", sweep_no + 1);
 	      p_file = fopen( file_name, "w" );
 
-	      memset( vector_x, 0, dimension * sizeof(double) );
 
 	      (circuit_simulation.dc_sweep_settings + sweep_no)->dc_sweep_index1 +=
 			      (circuit_simulation.dc_sweep_settings + sweep_no)->dc_sweep == SWEEP_VOLTAGE_SOURCE ? circuit_simulation.number_of_nodes : 0;
