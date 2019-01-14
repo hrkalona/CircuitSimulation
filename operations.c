@@ -22,9 +22,9 @@ void ACAnalysis(void)
 	unsigned int dimension; 
 	int l, j, counter;;
 	char string[3000];
-	char temp_string[300];
+	char temp_string[1000];
 	char string2[3000];
-	char temp_string2[300];
+	char temp_string2[1000];
 	double f, end_freq_decade = 0;
 	double step;
 	double arg, mag;
@@ -335,10 +335,10 @@ void ACAnalysis(void)
 			      pipe2 = popen( "gnuplot -persist", "w" );
 
 			      string[0] = '\0';
-			      strcat( string, "plot " );
+			      strcat( string, "set terminal wxt size 800,600; plot " );
 			      
 			      string2[0] = '\0';
-			      strcat( string2, "plot " );
+			      strcat( string2, "set terminal wxt size 800,600; plot " );
 			      for (l = 0, j = 0; j < counter && l < circuit_simulation.number_of_nodes + 1; l++)
 			      {
 				      if ((circuit_simulation.plot_settings + l)->ac_plot)
@@ -395,19 +395,19 @@ void ACAnalysis(void)
 
 			      if(circuit_simulation.ac_plot_scale == DB) {
 				  sprintf( temp_string,
-					      "; set grid; set zeroaxis; set key out horiz top center; set terminal wxt size 800,600; set title \"AC Analysis\t#circuit %s\"; set autoscale; set xlabel \"Frequency [Hz]\"; set ylabel \"V Magnitude [dB]\"; replot;",
+					      "; set grid; set zeroaxis; set key out horiz top center; set title \"AC Analysis\t#circuit %s\"; set autoscale; set xlabel \"Frequency [Hz]\"; set ylabel \"V Magnitude [dB]\"; replot;",
 					      circuit_simulation.file_name );
 			      }
 			      else {
 				  sprintf( temp_string,
-					      "; set grid; set zeroaxis; set key out horiz top center; set terminal wxt size 800,600; set title \"AC Analysis\t#circuit %s\"; set autoscale; set xlabel \"Frequency [Hz]\"; set ylabel \"V Magnitude [Volt]\"; replot;",
+					      "; set grid; set zeroaxis; set key out horiz top center; set title \"AC Analysis\t#circuit %s\"; set autoscale; set xlabel \"Frequency [Hz]\"; set ylabel \"V Magnitude [Volt]\"; replot;",
 					      circuit_simulation.file_name );
 			      }
 			      
 			      strcat( string, temp_string );
 			      
 			      sprintf( temp_string2,
-					      "; set grid; set zeroaxis; set key out horiz top center; set terminal wxt size 800,600; set title \"AC Analysis\t#circuit %s\"; set autoscale; set xlabel \"Frequency [Hz]\"; set ylabel \"V Phase [Degrees]\"; replot;",
+					      "; set grid; set zeroaxis; set key out horiz top center; set title \"AC Analysis\t#circuit %s\"; set autoscale; set xlabel \"Frequency [Hz]\"; set ylabel \"V Phase [Degrees]\"; replot;",
 					      circuit_simulation.file_name );
 			      strcat( string2, temp_string2 );
 			      
@@ -628,7 +628,7 @@ void TransientAnalysis(void)
 	double *vector_e_1 = NULL, *vector_e = NULL, t, time_steps;
 	double *old_vec_x, *old_vec_b;
 	char string[3000];
-	char temp_string[300];
+	char temp_string[1000];
 	int transient_analysis_no;
 	char file_name[40];
 
@@ -946,7 +946,7 @@ void TransientAnalysis(void)
 				pipe = popen( "gnuplot -persist", "w" );
 
 				string[0] = '\0';
-				strcat( string, "plot " );
+				strcat( string, "set terminal wxt size 800,600; plot " );
 				for (l = 0, j = 0; j < counter && l < circuit_simulation.number_of_nodes + 1; l++)
 				{
 					if ((circuit_simulation.plot_settings + l)->transient_plot)
@@ -984,9 +984,10 @@ void TransientAnalysis(void)
 				}
 
 				sprintf( temp_string,
-						"; set grid; set zeroaxis; set key out horiz top center; set terminal wxt size 800,600; set title \"Transient Analysis\t#circuit %s\"; set autoscale; set xlabel \"Time [sec]\"; set ylabel \"V values [Volt]\"; replot;",
+						"; set grid; set zeroaxis; set key out horiz top center; set title \"Transient Analysis\t#circuit %s\"; set autoscale; set xlabel \"Time [sec]\"; set ylabel \"V values [Volt]\"; replot;",
 						circuit_simulation.file_name );
 				strcat( string, temp_string );
+				printf("%s\n", string);
 				fprintf( pipe, "%s\n", string );
 				fclose( pipe );
 			}
@@ -1031,7 +1032,7 @@ void DCSweep(void)
 	int j, l, counter;
 	FILE *p_file = NULL, *p_file2 = NULL, *pipe = NULL;
 	char string[3000];
-	char temp_string[300];
+	char temp_string[1000];
 	double percent = 0;
 	double percent_step;
 	int sweep_no;
@@ -1263,7 +1264,7 @@ void DCSweep(void)
 			      pipe = popen( "gnuplot -persist", "w" );
 
 			      string[0] = '\0';
-			      strcat( string, "plot " );
+			      strcat( string, "set terminal wxt size 800,600; plot " );
 			      for (l = 0, j = 0; j < counter && l < circuit_simulation.number_of_nodes + 1; l++)
 			      {
 				      if ((circuit_simulation.plot_settings + l)->dc_sweep_plot)
@@ -1303,13 +1304,13 @@ void DCSweep(void)
 			      if ((circuit_simulation.dc_sweep_settings + sweep_no)->sweep_name[0] == 'V')
 			      {
 				      sprintf( temp_string,
-						      "; set grid; set zeroaxis; set key out horiz top center; set terminal wxt size 800,600; set title \"DC Sweep @ Source %s\t#circuit %s\"; set autoscale; set xlabel \"Sweep Values [Volt]\"; set ylabel \"V values [Volt]\";  replot;",
+						      "; set grid; set zeroaxis; set key out horiz top center; set title \"DC Sweep @ Source %s\t#circuit %s\"; set autoscale; set xlabel \"Sweep Values [Volt]\"; set ylabel \"V values [Volt]\";  replot;",
 						      (circuit_simulation.dc_sweep_settings + sweep_no)->sweep_name, circuit_simulation.file_name );
 			      }
 			      else
 			      {
 				      sprintf( temp_string,
-						      "; set grid; set zeroaxis; set key out horiz top center; set terminal wxt size 800,600; set title \"DC Sweep @ Source %s\t#circuit %s\"; set autoscale; set xlabel \"Sweep Values [Ampere]\"; set ylabel \"V values [Volt]\";  replot;",
+						      "; set grid; set zeroaxis; set key out horiz top center; set title \"DC Sweep @ Source %s\t#circuit %s\"; set autoscale; set xlabel \"Sweep Values [Ampere]\"; set ylabel \"V values [Volt]\";  replot;",
 						      (circuit_simulation.dc_sweep_settings + sweep_no)->sweep_name, circuit_simulation.file_name );
 			      }
 
