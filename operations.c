@@ -331,8 +331,8 @@ void ACAnalysis(void)
 
 		      if (counter != 0)
 		      {
-			      pipe = popen( "gnuplot -persist", "w" );
-			      pipe2 = popen( "gnuplot -persist", "w" );
+			      pipe = popen( "gnuplot -persist > /dev/null 2>&1", "w" );
+			      pipe2 = popen( "gnuplot -persist > /dev/null 2>&1", "w" );
 
 			      string[0] = '\0';
 			      strcat( string, "set terminal wxt size 800,600; plot " );
@@ -943,7 +943,7 @@ void TransientAnalysis(void)
 
 			if (counter != 0)
 			{
-				pipe = popen( "gnuplot -persist", "w" );
+				pipe = popen( "gnuplot -persist > /dev/null 2>&1", "w" );
 
 				string[0] = '\0';
 				strcat( string, "set terminal wxt size 800,600; plot " );
@@ -987,7 +987,6 @@ void TransientAnalysis(void)
 						"; set grid; set zeroaxis; set key out horiz top center; set title \"Transient Analysis\t#circuit %s\"; set autoscale; set xlabel \"Time [sec]\"; set ylabel \"V values [Volt]\"; replot;",
 						circuit_simulation.file_name );
 				strcat( string, temp_string );
-				printf("%s\n", string);
 				fprintf( pipe, "%s\n", string );
 				fclose( pipe );
 			}
@@ -1261,7 +1260,7 @@ void DCSweep(void)
 
 		      if (counter != 0)
 		      {
-			      pipe = popen( "gnuplot -persist", "w" );
+			      pipe = popen( "gnuplot -persist > /dev/null 2>&1", "w" );
 
 			      string[0] = '\0';
 			      strcat( string, "set terminal wxt size 800,600; plot " );
