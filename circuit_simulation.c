@@ -665,8 +665,7 @@ void Graph(void)
 
 	fclose( file_ptr );
 
-	pipe = popen( "xdot graph.txt &", "w" );
+	pipe = popen( "xdot graph.txt & > /dev/null 2>&1", "w" );
 	fclose( pipe );
 
 }
-
