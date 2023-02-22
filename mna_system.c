@@ -185,6 +185,55 @@ void createMnaSystemDC(void)
 					group2_counter++;
 
 					break;
+                                case VOLTAGE_CONTROLLED_VOLTAGE_SOURCE:
+                                        group2_index = circuit_simulation.number_of_nodes + group2_counter;
+                                        
+                                        if (circuit_simulation.matrix_sparsity == SPARSE) {
+                                              if (current1->positive_terminal)
+					      {
+						      cs_di_entry(G, current1->positive_terminal - 1, group2_index, 1.0);
+						      cs_di_entry(G, group2_index, current1->positive_terminal - 1, 1.0);
+					      }
+
+					      if (current1->negative_terminal)
+					      {
+						      cs_di_entry(G, current1->negative_terminal - 1, group2_index, -1.0);
+						      cs_di_entry(G, group2_index, current1->negative_terminal - 1, -1.0);
+					      }
+
+                                              
+                                               if (current1->in_positive_terminal) {
+                                                    cs_di_entry(G, group2_index, current1->in_positive_terminal - 1, -current1->value);                                             
+                  
+                                               }
+
+                                                if (current1->in_negative_terminal) {                                             
+                                                    cs_di_entry(G, group2_index, current1->in_negative_terminal - 1, current1->value);       
+                                               }
+
+                                        }
+                                        else {
+                                             if (current1->positive_terminal) {
+                                                 matrix_G[(current1->positive_terminal - 1) * dimension + group2_index] += 1;
+                                                 matrix_G[group2_index * dimension + (current1->positive_terminal - 1)] += 1;
+                                             }
+
+                                              if (current1->negative_terminal)
+					      {
+						      matrix_G[(current1->negative_terminal - 1) * dimension + group2_index] -= 1;
+						      matrix_G[group2_index * dimension + (current1->negative_terminal - 1)] -= 1;
+					      }
+
+                                               if (current1->in_positive_terminal) {                                             
+                                                 matrix_G[group2_index * dimension + (current1->in_positive_terminal - 1)] -=  current1->value;
+                                               }
+
+                                                if (current1->in_negative_terminal) {                                             
+                                                 matrix_G[group2_index * dimension + (current1->in_negative_terminal - 1)] =  current1->value;
+                                               }
+                                        }
+                                        group2_counter++;
+                                        break;
 				default:
 					break;
 
@@ -319,7 +368,7 @@ void createMnaSystemTransient(int run, double time_step, double fin_time)
 		createMnaSystemDC();
 	}
 
-	sources = ( twoTerminalsElement** ) malloc( (circuit_simulation.number_of_elements[CURRENT_SOURCE] + circuit_simulation.group2_elements) * sizeof(twoTerminalsElement) );
+	sources = ( twoTerminalsElement** ) calloc( (circuit_simulation.number_of_elements[CURRENT_SOURCE] + circuit_simulation.group2_elements), sizeof(twoTerminalsElement));
 
 	if (sources == NULL)
 	{
@@ -441,7 +490,6 @@ void createMnaSystemTransient(int run, double time_step, double fin_time)
                                               }
 
                                               
-					      sources[sources_counter] = current1;
 					      sources_counter++;
                                               group2_counter++;
                                             }
@@ -489,16 +537,15 @@ void createMnaSystemTransient(int run, double time_step, double fin_time)
 					}
 					
 
-					sources[sources_counter] = current1;
+                                        if(current1->type == VOLTAGE_SOURCE) {
+						sources[sources_counter] = current1;
+                                        }
 					sources_counter++;
-
-
 					group2_counter++;
 
 					break;
 				case RESISTANCE:
                                         if(current1->isG2) {
-						sources[sources_counter] = current1;
 						sources_counter++;
 		                                group2_counter++;
 					}
@@ -1002,6 +1049,56 @@ void createMnaSystemAC(double f, long int run, long int internal_run) {
 					group2_counter++;
 
 					break;
+                                 case VOLTAGE_CONTROLLED_VOLTAGE_SOURCE:
+                                        group2_index = circuit_simulation.number_of_nodes + group2_counter;
+
+                                        
+                                        if (circuit_simulation.matrix_sparsity == SPARSE) {
+                                              if (current1->positive_terminal)
+					      {
+						      cs_ci_entry(Gcomplex, current1->positive_terminal - 1, group2_index, 1.0);
+						      cs_ci_entry(Gcomplex, group2_index, current1->positive_terminal - 1, 1.0);
+					      }
+
+					      if (current1->negative_terminal)
+					      {
+						      cs_ci_entry(Gcomplex, current1->negative_terminal - 1, group2_index, -1.0);
+						      cs_ci_entry(Gcomplex, group2_index, current1->negative_terminal - 1, -1.0);
+					      }
+
+                                              
+                                               if (current1->in_positive_terminal) {
+                                                    cs_ci_entry(Gcomplex, group2_index, current1->in_positive_terminal - 1, -current1->value);                                             
+                  
+                                               }
+
+                                                if (current1->in_negative_terminal) {                                             
+                                                    cs_ci_entry(Gcomplex, group2_index, current1->in_negative_terminal - 1, current1->value);       
+                                               }
+
+                                        }
+                                        else {
+                                             if (current1->positive_terminal) {
+                                                 matrix_Gcomplex[(current1->positive_terminal - 1) * dimension + group2_index] += 1;
+                                                 matrix_Gcomplex[group2_index * dimension + (current1->positive_terminal - 1)] += 1;
+                                             }
+
+                                              if (current1->negative_terminal)
+					      {
+						      matrix_Gcomplex[(current1->negative_terminal - 1) * dimension + group2_index] -= 1;
+						      matrix_Gcomplex[group2_index * dimension + (current1->negative_terminal - 1)] -= 1;
+					      }
+
+                                               if (current1->in_positive_terminal) {                                             
+                                                 matrix_Gcomplex[group2_index * dimension + (current1->in_positive_terminal - 1)] -=  current1->value;
+                                               }
+
+                                                if (current1->in_negative_terminal) {                                             
+                                                 matrix_Gcomplex[group2_index * dimension + (current1->in_negative_terminal - 1)] =  current1->value;
+                                               }
+                                        }
+                                        group2_counter++;
+                                        break;
 				default:
 					break;
 

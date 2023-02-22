@@ -4,16 +4,16 @@
 
 #define NAME_SIZE 256
 
-#define ELEMENTS 8
+#define ELEMENTS 10
 
 #define SIZE_OF_LINE 3000
 
 #define ZERO 1e-12
 
-#define DEBUG 0
+#define DEBUG 1
 
 
-typedef enum {VOLTAGE_SOURCE, CURRENT_SOURCE, RESISTANCE, CAPACITOR, INDUCTOR, DIODE, BJT, MOS} ELEMENT_TYPE;
+typedef enum {VOLTAGE_SOURCE, CURRENT_SOURCE, RESISTANCE, CAPACITOR, INDUCTOR, DIODE, BJT, MOS, VOLTAGE_CONTROLLED_VOLTAGE_SOURCE, VOLTAGE_CONTROLLED_CURRENT_SOURCE} ELEMENT_TYPE;
 
 typedef enum {SWEEP_OFF, SWEEP_VOLTAGE_SOURCE, SWEEP_CURRENT_SOURCE} SWEEP_OPT;
 
@@ -93,6 +93,9 @@ typedef struct twoTerminalsElement {
     char string_name[NAME_SIZE];  // Original given name
     unsigned int positive_terminal; // positive terminal
     unsigned int negative_terminal; // negative terminal
+    
+    unsigned int in_positive_terminal;
+    unsigned int in_negative_terminal;
     double value; // Element value, according to type, SI
     transientComponent *transient; // transient part, for V, I, null if DC, or not V, I
     acComponent *ac; // ac part, for V, I, null if DC, or not V, I

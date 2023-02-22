@@ -95,31 +95,36 @@ void ACAnalysis(void)
 
 	      fprintf( p_file, "The circuit, %s, contains:\n\n", circuit_simulation.file_name );
 
-	      fprintf( p_file, "          Nodes: %7d\n", circuit_simulation.number_of_nodes + 1 );
+	      fprintf( p_file, "             Nodes: %7d\n", circuit_simulation.number_of_nodes + 1 );
 
 	      if (circuit_simulation.number_of_elements[VOLTAGE_SOURCE])
 	      {
-		      fprintf( p_file, "Voltage Sources: %7d\n", circuit_simulation.number_of_elements[VOLTAGE_SOURCE] );
+		      fprintf( p_file, "   Voltage Sources: %7d\n", circuit_simulation.number_of_elements[VOLTAGE_SOURCE] );
 	      }
 
 	      if (circuit_simulation.number_of_elements[CURRENT_SOURCE])
 	      {
-		      fprintf( p_file, "Current Sources: %7d\n", circuit_simulation.number_of_elements[CURRENT_SOURCE] );
+		      fprintf( p_file, "   Current Sources: %7d\n", circuit_simulation.number_of_elements[CURRENT_SOURCE] );
 	      }
 
 	      if (circuit_simulation.number_of_elements[RESISTANCE])
 	      {
-		      fprintf( p_file, "    Resistances: %7d\n", circuit_simulation.number_of_elements[RESISTANCE] );
+		      fprintf( p_file, "       Resistances: %7d\n", circuit_simulation.number_of_elements[RESISTANCE] );
 	      }
 
 	      if (circuit_simulation.number_of_elements[CAPACITOR])
 	      {
-		      fprintf( p_file, "     Capacitors: %7d\n", circuit_simulation.number_of_elements[CAPACITOR] );
+		      fprintf( p_file, "        Capacitors: %7d\n", circuit_simulation.number_of_elements[CAPACITOR] );
 	      }
 
 	      if (circuit_simulation.number_of_elements[INDUCTOR])
 	      {
-		      fprintf( p_file, "      Inductors: %7d\n", circuit_simulation.number_of_elements[INDUCTOR] );
+		      fprintf( p_file, "         Inductors: %7d\n", circuit_simulation.number_of_elements[INDUCTOR] );
+	      }
+
+                if (circuit_simulation.number_of_elements[ VOLTAGE_CONTROLLED_VOLTAGE_SOURCE])
+	      {
+		      fprintf( p_file, "VC Voltage Sources: %7d\n", circuit_simulation.number_of_elements[ VOLTAGE_CONTROLLED_VOLTAGE_SOURCE] );
 	      }
 
 	      if (circuit_simulation.number_of_elements[DIODE])
@@ -500,32 +505,37 @@ void DCAnalysis(void)
 
 	fprintf( p_file, "The circuit, %s, contains:\n\n", circuit_simulation.file_name );
 
-	fprintf( p_file, "          Nodes: %7d\n", circuit_simulation.number_of_nodes + 1 );
+	fprintf( p_file, "             Nodes: %7d\n", circuit_simulation.number_of_nodes + 1 );
 
 	if (circuit_simulation.number_of_elements[VOLTAGE_SOURCE])
 	{
-		fprintf( p_file, "Voltage Sources: %7d\n", circuit_simulation.number_of_elements[VOLTAGE_SOURCE] );
+		fprintf( p_file, "   Voltage Sources: %7d\n", circuit_simulation.number_of_elements[VOLTAGE_SOURCE] );
 	}
 
 	if (circuit_simulation.number_of_elements[CURRENT_SOURCE])
 	{
-		fprintf( p_file, "Current Sources: %7d\n", circuit_simulation.number_of_elements[CURRENT_SOURCE] );
+		fprintf( p_file, "   Current Sources: %7d\n", circuit_simulation.number_of_elements[CURRENT_SOURCE] );
 	}
 
 	if (circuit_simulation.number_of_elements[RESISTANCE])
 	{
-		fprintf( p_file, "    Resistances: %7d\n", circuit_simulation.number_of_elements[RESISTANCE] );
+		fprintf( p_file, "       Resistances: %7d\n", circuit_simulation.number_of_elements[RESISTANCE] );
 	}
 
 	if (circuit_simulation.number_of_elements[CAPACITOR])
 	{
-		fprintf( p_file, "     Capacitors: %7d\n", circuit_simulation.number_of_elements[CAPACITOR] );
+		fprintf( p_file, "        Capacitors: %7d\n", circuit_simulation.number_of_elements[CAPACITOR] );
 	}
 
 	if (circuit_simulation.number_of_elements[INDUCTOR])
 	{
-		fprintf( p_file, "      Inductors: %7d\n", circuit_simulation.number_of_elements[INDUCTOR] );
+		fprintf( p_file, "         Inductors: %7d\n", circuit_simulation.number_of_elements[INDUCTOR] );
 	}
+
+          if (circuit_simulation.number_of_elements[ VOLTAGE_CONTROLLED_VOLTAGE_SOURCE])
+	      {
+		      fprintf( p_file, "VC Voltage Sources: %7d\n", circuit_simulation.number_of_elements[ VOLTAGE_CONTROLLED_VOLTAGE_SOURCE] );
+	      }
 
 	if (circuit_simulation.number_of_elements[DIODE])
 	{
@@ -718,32 +728,37 @@ void TransientAnalysis(void)
 
 		fprintf( p_file, "The circuit, %s, contains:\n\n", circuit_simulation.file_name );
 
-		fprintf( p_file, "          Nodes: %7d\n", circuit_simulation.number_of_nodes + 1 );
+		fprintf( p_file, "             Nodes: %7d\n", circuit_simulation.number_of_nodes + 1 );
 
 		if (circuit_simulation.number_of_elements[VOLTAGE_SOURCE])
 		{
-			fprintf( p_file, "Voltage Sources: %7d\n", circuit_simulation.number_of_elements[VOLTAGE_SOURCE] );
+			fprintf( p_file, "   Voltage Sources: %7d\n", circuit_simulation.number_of_elements[VOLTAGE_SOURCE] );
 		}
 
 		if (circuit_simulation.number_of_elements[CURRENT_SOURCE])
 		{
-			fprintf( p_file, "Current Sources: %7d\n", circuit_simulation.number_of_elements[CURRENT_SOURCE] );
+			fprintf( p_file, "   Current Sources: %7d\n", circuit_simulation.number_of_elements[CURRENT_SOURCE] );
 		}
 
 		if (circuit_simulation.number_of_elements[RESISTANCE])
 		{
-			fprintf( p_file, "    Resistances: %7d\n", circuit_simulation.number_of_elements[RESISTANCE] );
+			fprintf( p_file, "       Resistances: %7d\n", circuit_simulation.number_of_elements[RESISTANCE] );
 		}
 
 		if (circuit_simulation.number_of_elements[CAPACITOR])
 		{
-			fprintf( p_file, "     Capacitors: %7d\n", circuit_simulation.number_of_elements[CAPACITOR] );
+			fprintf( p_file, "        Capacitors: %7d\n", circuit_simulation.number_of_elements[CAPACITOR] );
 		}
 
 		if (circuit_simulation.number_of_elements[INDUCTOR])
 		{
-			fprintf( p_file, "      Inductors: %7d\n", circuit_simulation.number_of_elements[INDUCTOR] );
+			fprintf( p_file, "         Inductors: %7d\n", circuit_simulation.number_of_elements[INDUCTOR] );
 		}
+
+                  if (circuit_simulation.number_of_elements[ VOLTAGE_CONTROLLED_VOLTAGE_SOURCE])
+	      {
+		      fprintf( p_file, "VC Voltage Sources: %7d\n", circuit_simulation.number_of_elements[ VOLTAGE_CONTROLLED_VOLTAGE_SOURCE] );
+	      }
 
 		if (circuit_simulation.number_of_elements[DIODE])
 		{
@@ -823,6 +838,11 @@ void TransientAnalysis(void)
 			for (j = 0, k = 0; j < circuit_simulation.number_of_elements[CURRENT_SOURCE] + circuit_simulation.group2_elements; j++)
 			{
 
+                                if(sources[j] == NULL) {
+                                    k++;
+                                    continue;
+                                }
+
 				switch (sources[j]->type)
 				{
 					case CURRENT_SOURCE:
@@ -840,18 +860,10 @@ void TransientAnalysis(void)
 						break;
 
 					case VOLTAGE_SOURCE:
-					case INDUCTOR:
-						vector_e[circuit_simulation.number_of_nodes + k] +=
-								sources[j]->type == INDUCTOR ? 0 : (sources[j]->transient == NULL ? sources[j]->value : sources[j]->transient->vals[i]);
-
+						vector_e[circuit_simulation.number_of_nodes + k] += sources[j]->transient == NULL ? sources[j]->value : sources[j]->transient->vals[i];
 						k++;
 						break;
-                                        case RESISTANCE:
-                                        case CAPACITOR:
-                                               if(sources[j]->isG2) {
-                                                  k++;
-                                               }                                              
-                                               break;
+                             
 					default:
 						break;
 
@@ -1089,34 +1101,39 @@ void DCSweep(void)
 
 	      fprintf( p_file, "The circuit, %s, contains:\n\n", circuit_simulation.file_name );
 
-	      fprintf( p_file, "          Nodes: %7d\n", circuit_simulation.number_of_nodes + 1 );
+	      fprintf( p_file, "             Nodes: %7d\n", circuit_simulation.number_of_nodes + 1 );
 
 	      if (circuit_simulation.number_of_elements[VOLTAGE_SOURCE])
 	      {
-		      fprintf( p_file, "Voltage Sources: %7d\n", circuit_simulation.number_of_elements[VOLTAGE_SOURCE] );
+		      fprintf( p_file, "   Voltage Sources: %7d\n", circuit_simulation.number_of_elements[VOLTAGE_SOURCE] );
 	      }
 
 	      if (circuit_simulation.number_of_elements[CURRENT_SOURCE])
 	      {
-		      fprintf( p_file, "Current Sources: %7d\n", circuit_simulation.number_of_elements[CURRENT_SOURCE] );
+		      fprintf( p_file, "   Current Sources: %7d\n", circuit_simulation.number_of_elements[CURRENT_SOURCE] );
 	      }
 
 	      if (circuit_simulation.number_of_elements[RESISTANCE])
 	      {
-		      fprintf( p_file, "    Resistances: %7d\n", circuit_simulation.number_of_elements[RESISTANCE] );
+		      fprintf( p_file, "       Resistances: %7d\n", circuit_simulation.number_of_elements[RESISTANCE] );
 	      }
 
 	      if (circuit_simulation.number_of_elements[CAPACITOR])
 	      {
-		      fprintf( p_file, "     Capacitors: %7d\n", circuit_simulation.number_of_elements[CAPACITOR] );
+		      fprintf( p_file, "        Capacitors: %7d\n", circuit_simulation.number_of_elements[CAPACITOR] );
 	      }
 
 	      if (circuit_simulation.number_of_elements[INDUCTOR])
 	      {
-		      fprintf( p_file, "      Inductors: %7d\n", circuit_simulation.number_of_elements[INDUCTOR] );
+		      fprintf( p_file, "         Inductors: %7d\n", circuit_simulation.number_of_elements[INDUCTOR] );
 	      }
 
-	      if (circuit_simulation.number_of_elements[DIODE])
+               if (circuit_simulation.number_of_elements[ VOLTAGE_CONTROLLED_VOLTAGE_SOURCE])
+	      {
+		      fprintf( p_file, "VC Voltage Sources: %7d\n", circuit_simulation.number_of_elements[ VOLTAGE_CONTROLLED_VOLTAGE_SOURCE] );
+	      }
+              
+              if (circuit_simulation.number_of_elements[DIODE])
 	      {
 		      fprintf( p_file, "         Diodes: %7d\n", circuit_simulation.number_of_elements[DIODE] );
 	      }

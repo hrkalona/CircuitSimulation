@@ -312,7 +312,7 @@ void freeAllocationsTransient(void) {
 	
 			
 	for(i = 0; i < circuit_simulation.number_of_elements[CURRENT_SOURCE] + circuit_simulation.group2_elements; i++) {
-	      if(sources[i]->transient != NULL) {
+	      if(sources[i] != NULL && sources[i]->transient != NULL) {
 		  free(sources[i]->transient->vals);
 	      }
 	}

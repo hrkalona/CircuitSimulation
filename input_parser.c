@@ -2248,6 +2248,19 @@ void parseInput(FILE *p_file) {
 		    non_zeroes_G += 2;
 		    non_zeroes_Gcomplex += 2;
 		}
+
+                if(current1 -> isG2) {
+                   if(current1 -> positive_terminal) {
+	              non_zeroes_G+=2;
+		      non_zeroes_Gcomplex+=2;
+		   }
+
+                   if(current1 -> negative_terminal) {
+			non_zeroes_G+=2;
+			non_zeroes_Gcomplex+=2;
+		   }
+
+                }
 		
 		break;
 		
@@ -2345,6 +2358,21 @@ void parseInput(FILE *p_file) {
 		    non_zeroes_C += 2;
 		    non_zeroes_Gcomplex += 2;
 		}
+
+                if(current1 -> isG2) {
+			non_zeroes_G++;
+
+                        if(current1 -> positive_terminal) {
+			    non_zeroes_C++;
+			}
+		
+			if(current1 -> negative_terminal) {
+			    non_zeroes_C++;
+			}
+
+                        non_zeroes_Gcomplex++;
+
+                }
 		
 		break;
 		
@@ -2424,6 +2452,117 @@ void parseInput(FILE *p_file) {
 		insertTwoTerminalsElement(current1);
 		
 		if(current1 -> positive_terminal) {
+		    non_zeroes_G++;
+		    non_zeroes_Gcomplex++;
+		}
+		
+		if(current1 -> negative_terminal) {
+		    non_zeroes_G++;
+		    non_zeroes_Gcomplex++;
+		}
+		
+		 non_zeroes_G++;
+		 non_zeroes_Gcomplex++;
+		
+		break;
+
+
+             /* vcvs*/	
+	    case 'e':
+	    case 'E':
+	    
+		current1 = (twoTerminalsElement*) malloc(sizeof(twoTerminalsElement));
+		
+		if(current1 == NULL) {
+		    printf("Could not allocate new node.\n");
+	            printf("Terminating.\n");
+	            exit(-1);
+		}
+		
+		circuit_simulation.group2_elements++;
+	      
+		current1 -> type = VOLTAGE_CONTROLLED_VOLTAGE_SOURCE;
+                current1 -> isG2 = 1;
+	    
+		temp = strtok(line + i + 1, "\t ");
+		
+		if(temp == NULL || temp[0] == 13) {
+		    printf("Element name not found at line %d.\n", counter);
+	            printf("Terminating.\n");
+	            exit(-1);
+		}
+		
+		strcpy(current1 -> string_name, temp);
+
+		current1 -> name = ++circuit_simulation.number_of_elements[VOLTAGE_CONTROLLED_VOLTAGE_SOURCE];
+		
+		temp = strtok(NULL, "\t ");
+		
+		if(temp == NULL || temp[0] == 13) {
+		    printf("Positive terminal name not found at line %d.\n", counter);
+	            printf("Terminating.\n");
+	            exit(-1);
+		}
+	 	      
+		current1 -> in_positive_terminal = insert_node(temp);
+		
+		temp = strtok(NULL, "\t ");
+		
+		if(temp == NULL || temp[0] == 13) {
+		    printf("Negative terminal name not found at line %d.\n", counter);
+	            printf("Terminating.\n");
+	            exit(-1);
+		}
+	      	      
+		current1 -> in_negative_terminal = insert_node(temp);
+
+                temp = strtok(NULL, "\t ");
+		
+		if(temp == NULL || temp[0] == 13) {
+		    printf("Positive terminal name not found at line %d.\n", counter);
+	            printf("Terminating.\n");
+	            exit(-1);
+		}
+	 	      
+		current1 -> positive_terminal = insert_node(temp);
+		
+		temp = strtok(NULL, "\t ");
+		
+		if(temp == NULL || temp[0] == 13) {
+		    printf("Negative terminal name not found at line %d.\n", counter);
+	            printf("Terminating.\n");
+	            exit(-1);
+		}
+	      	      
+		current1 -> negative_terminal = insert_node(temp);		
+		
+		temp = strtok(NULL, "\t \n");
+		
+		if(temp == NULL || temp[0] == 13) {
+		    printf("Element value not found at line %d.\n", counter);
+	            printf("Terminating.\n");
+	            exit(-1);
+		}
+	      
+		current1 -> value = invalid_number_checker(temp);
+		
+		temp = strtok(NULL, "\t \n");
+		
+		if(temp != NULL && temp[0] != 13) {
+		    printf("Too many inputs at line %d.\n", counter);
+	            printf("Terminating.\n");
+	            exit(-1);
+		}
+		
+		current1 -> transient = NULL;
+		
+		current1 -> ac = NULL;
+	      
+		current1 -> next = NULL;
+		
+		insertTwoTerminalsElement(current1);
+		
+		if(current1 -> positive_terminal) {
 		    non_zeroes_G += 2;
 		    non_zeroes_Gcomplex += 2;
 		}
@@ -2433,7 +2572,12 @@ void parseInput(FILE *p_file) {
 		    non_zeroes_Gcomplex += 2;
 		}
 		
-		if(current1 -> negative_terminal || current1 -> positive_terminal) {
+		if(current1 -> in_negative_terminal) {
+		    non_zeroes_C++;
+		    non_zeroes_Gcomplex++;
+		}
+
+                if(current1 -> in_positive_terminal) {
 		    non_zeroes_C++;
 		    non_zeroes_Gcomplex++;
 		}
@@ -3256,26 +3400,30 @@ void parseInput(FILE *p_file) {
 
     printf("\n\nParsing results. The circuit contains:\n\n");
 
-    printf("          Nodes: %7d\n", circuit_simulation.number_of_nodes + 1);
+    printf("             Nodes: %7d\n", circuit_simulation.number_of_nodes + 1);
     
     if(circuit_simulation.number_of_elements[VOLTAGE_SOURCE]) {
-	printf("Voltage Sources: %7d\n", circuit_simulation.number_of_elements[VOLTAGE_SOURCE]);
+	printf("   Voltage Sources: %7d\n", circuit_simulation.number_of_elements[VOLTAGE_SOURCE]);
     }
     
     if(circuit_simulation.number_of_elements[CURRENT_SOURCE]) {
-	printf("Current Sources: %7d\n", circuit_simulation.number_of_elements[CURRENT_SOURCE]);
+	printf("   Current Sources: %7d\n", circuit_simulation.number_of_elements[CURRENT_SOURCE]);
     }
     
     if(circuit_simulation.number_of_elements[RESISTANCE]) {
-	printf("    Resistances: %7d\n", circuit_simulation.number_of_elements[RESISTANCE]);
+	printf("       Resistances: %7d\n", circuit_simulation.number_of_elements[RESISTANCE]);
     }
     
     if(circuit_simulation.number_of_elements[CAPACITOR]) {
-	printf("     Capacitors: %7d\n", circuit_simulation.number_of_elements[CAPACITOR]);
+	printf("        Capacitors: %7d\n", circuit_simulation.number_of_elements[CAPACITOR]);
     }
     
     if(circuit_simulation.number_of_elements[INDUCTOR]) {
-	printf("      Inductors: %7d\n", circuit_simulation.number_of_elements[INDUCTOR]);
+	printf("         Inductors: %7d\n", circuit_simulation.number_of_elements[INDUCTOR]);
+    }
+
+    if(circuit_simulation.number_of_elements[VOLTAGE_CONTROLLED_VOLTAGE_SOURCE]) {
+	printf("VC Voltage Sources: %7d\n", circuit_simulation.number_of_elements[VOLTAGE_CONTROLLED_VOLTAGE_SOURCE]);
     }
     
     if(circuit_simulation.number_of_elements[DIODE]) {
