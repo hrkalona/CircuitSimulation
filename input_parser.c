@@ -37,6 +37,7 @@ void parseInput(FILE *p_file) {
 		circuit_simulation.group2_elements++;
 	      
 		current1 -> type = VOLTAGE_SOURCE;
+                current1 -> isG2 = 1; 
 	    	
 		temp = strtok(line + i + 1, "\t ");
 		
@@ -966,6 +967,7 @@ void parseInput(FILE *p_file) {
 			    if(!strcasecmp(temp, "AC")) {
 			        break;
 			    }
+
 			
 			    current1 -> transient -> pwl -> t = realloc(current1 -> transient -> pwl -> t, (j + 1) * sizeof(double));
 			    current1 -> transient -> pwl -> i = realloc(current1 -> transient -> pwl -> i, (j + 1) * sizeof(double));
@@ -1093,6 +1095,7 @@ void parseInput(FILE *p_file) {
 		break;
 		
 	    /* current source */	
+	    /* current source */	
 	    case 'i':
 	    case 'I':
 	    
@@ -1107,6 +1110,7 @@ void parseInput(FILE *p_file) {
 		circuit_simulation.group1_elements++;
 	      
 		current1 -> type = CURRENT_SOURCE;
+                current1 -> isG2 = 0;
 	    	     
 		temp = strtok(line + i + 1, "\t ");
 		
@@ -2165,6 +2169,7 @@ void parseInput(FILE *p_file) {
 		circuit_simulation.group1_elements++;
 	      
 		current1 -> type = RESISTANCE;
+                current1 -> isG2 = 0;
 	    
 		temp = strtok(line + i + 1, "\t ");
 		
@@ -2209,8 +2214,12 @@ void parseInput(FILE *p_file) {
 		current1 -> value = invalid_number_checker(temp);
 		
 		temp = strtok(NULL, "\t \n");
-		
-		if(temp != NULL && temp[0] != 13) {
+
+		if(temp != NULL && !strcasecmp(temp, "G2")) {
+                   current1 -> isG2 = 1;
+                   circuit_simulation.group2_elements++;
+		}
+		else if(temp != NULL && temp[0] != 13) {
 		    printf("Too many inputs at line %d.\n", counter);
 	            printf("Terminating.\n");
 	            exit(-1);
@@ -2257,6 +2266,7 @@ void parseInput(FILE *p_file) {
 		circuit_simulation.group1_elements++;
 	      
 		current1 -> type = CAPACITOR;
+                current1 -> isG2 = 0;
 	    
 		temp = strtok(line + i + 1, "\t ");
 		
@@ -2302,7 +2312,12 @@ void parseInput(FILE *p_file) {
 
 		temp = strtok(NULL, "\t \n");
 		
-		if(temp != NULL && temp[0] != 13) {
+		
+		if(temp != NULL && !strcasecmp(temp, "G2")) {
+                   current1 -> isG2 = 1;
+                   circuit_simulation.group2_elements++;
+		}
+		else if(temp != NULL && temp[0] != 13) {
 		    printf("Too many inputs at line %d.\n", counter);
 	            printf("Terminating.\n");
 	            exit(-1);
@@ -2348,6 +2363,7 @@ void parseInput(FILE *p_file) {
 		circuit_simulation.group2_elements++;
 	      
 		current1 -> type = INDUCTOR;
+                current1 -> isG2 = 1;
 	    
 		temp = strtok(line + i + 1, "\t ");
 		
@@ -2437,6 +2453,7 @@ void parseInput(FILE *p_file) {
 		}
 	      
 		current1 -> type = DIODE;
+                current1 -> isG2 = 0;
 	   	      
 		strcpy(current1 -> string_name, strtok(line + i + 1, "\t "));
 		

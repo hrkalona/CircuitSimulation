@@ -846,6 +846,12 @@ void TransientAnalysis(void)
 
 						k++;
 						break;
+                                        case RESISTANCE:
+                                        case CAPACITOR:
+                                               if(sources[j]->isG2) {
+                                                  k++;
+                                               }                                              
+                                               break;
 					default:
 						break;
 

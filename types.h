@@ -96,6 +96,7 @@ typedef struct twoTerminalsElement {
     double value; // Element value, according to type, SI
     transientComponent *transient; // transient part, for V, I, null if DC, or not V, I
     acComponent *ac; // ac part, for V, I, null if DC, or not V, I
+    int isG2;
     struct twoTerminalsElement *next;
 } twoTerminalsElement;
 
