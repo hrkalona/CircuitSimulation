@@ -228,6 +228,9 @@ void freeAllocationsFinal(void) {
 					free( last1->transient->pwl->t );
 					free( last1->transient->pwl->i );
 					free( last1->transient->pwl );
+                                        break;
+                                case SFFM:
+                                        free(last1->transient->sffm);
 					break;
 			}		
 			free( last1->transient );
@@ -258,6 +261,9 @@ void freeAllocationsFinal(void) {
 				free( last1->transient->pwl->t );
 				free( last1->transient->pwl->i );
 				free( last1->transient->pwl );
+				break;
+                        case SFFM:
+                                free(last1->transient->sffm);
 				break;
 		}
 		free( last1->transient );
@@ -433,16 +439,28 @@ void Help(void)
 	printf( "Voltage Source:\n" );
 	printf( "V<name> <(+) positive node name>  <(-) negative node name> <value in Volt> [transient part] [ac part]\n\n" );
 	printf( "transient part:\n" );
-	printf( "EXP(i1 i2 td1 tc1 td2 tc2)\nSIN(i1 ia fr td df ph)\nPULSE(i1 i2 td tr tf pw per)\nPWL(t1 i1) (t2 i2)...(tn in)\n\n" );
+	printf( "EXP(i1 i2 td1 tc1 td2 tc2)\nSIN(i1 ia fr td df ph)\nPULSE(i1 i2 td tr tf pw per)\nPWL(t1 i1) (t2 i2)...(tn in)\nSFFM(v0 va fc mdi fs)\n\n" );
         printf( "ac part:\n" );
 	printf( "AC magnitude phase\n\n");
 	
 	printf( "Current Source:\n" );
 	printf( "I<name> <(+) positive node name>  <(-) negative node name> <value in Ampere> [transient part] [ac part]\n\n" );
 	printf( "transient part:\n" );
-	printf( "EXP(i1 i2 td1 tc1 td2 tc2)\nSIN(i1 ia fr td df ph)\nPULSE(i1 i2 td tr tf pw per)\nPWL(t1 i1) (t2 i2)...(tn in)\n\n" );
+	printf( "EXP(i1 i2 td1 tc1 td2 tc2)\nSIN(i1 ia fr td df ph)\nPULSE(i1 i2 td tr tf pw per)\nPWL(t1 i1) (t2 i2)...(tn in)\nSFFM(v0 va fc mdi fs)\n\n" );
         printf( "ac part:\n" );
 	printf( "AC magnitude phase\n\n");
+
+
+        printf( "Voltage Controlled Voltage Source:\n" );
+	printf( "E<name> <(+) positive node name>  <(-) negative node name>  <(+) positive controlling node name>  <(-) negative controlling node name> <voltage gain>\n\n" );
+
+        
+        printf( "Voltage Controlled Current Source:\n" );
+	printf( "G<name> <(+) positive node name>  <(-) negative node name>  <(+) positive controlling node name>  <(-) negative controlling node name> <transconductance>\n\n" );
+
+         
+        printf( "Short Circuit(Not compliant to spice format, emulates a zero volt voltage source):\n" );
+	printf( "_<name> <(+) positive node name>  <(-) negative node name>\n\n" );
 	
 	printf( "Resistance:\n" );
 	printf( "R<name> <(+) positive node name>  <(-) negative node name> <value in Ohm>\n\n" );
@@ -453,7 +471,7 @@ void Help(void)
 	printf( "Inductor:\n" );
 	printf( "L<name> <(+) positive node name>  <(-) negative node name> <value in Henry>\n\n" );
 
-	printf( "Diode:\n" );
+	/*printf( "Diode:\n" );
 	printf( "D<name> <(+) positive node name>  <(-) negative node name> <model name> [area]\n" );
 	printf( "(Just for netlist parsing. The simulation works only with linear elements).\n\n" );
 
@@ -463,7 +481,7 @@ void Help(void)
 
 	printf( "Transistor BJT:\n" );
 	printf( "Q<name> <C>  <B> <E> <model name> [area]\n" );
-	printf( "(Just for netlist parsing. The simulation works only with linear elements).\n\n\n" );
+	printf( "(Just for netlist parsing. The simulation works only with linear elements).\n\n\n" );*/
 
 	printf( "Linear Systems Solving Methods:\n" );
 	printf( "_______________________________\n\n" );
@@ -578,6 +596,43 @@ void Graph(void)
 						current1->string_name );
 				fprintf( file_ptr, "edge [dir=forward, style=bold, color=blue, label=\"-\"];\n" );
 				fprintf( file_ptr, "\"V%s\" -> \"%s\";\n", current1->string_name,
+						(circuit_simulation.plot_settings + current1->negative_terminal)->name );
+				break;
+                        case SHORT_CIRCUIT:
+				fprintf( file_ptr, "node [shape=circle,  style=bold, color=black];\n" );
+				fprintf( file_ptr, "\"%s\"\n", (circuit_simulation.plot_settings + current1->positive_terminal)->name );
+				fprintf( file_ptr, "node [shape=circle,  style=bold, color=black];\n" );
+				fprintf( file_ptr, "\"%s\"\n", (circuit_simulation.plot_settings + current1->negative_terminal)->name );
+				fprintf( file_ptr, "edge [dir=forward, style=bold, color=black, label=\"+ -\"];\n" );
+				fprintf( file_ptr, "\"%s\" -> \"%s\";\n", (circuit_simulation.plot_settings + current1->positive_terminal)->name,
+						(circuit_simulation.plot_settings + current1->negative_terminal)->name );
+				break;
+			case VOLTAGE_CONTROLLED_VOLTAGE_SOURCE:
+				fprintf( file_ptr, "node [shape=circle,  style=bold, color=black];\n" );
+				fprintf( file_ptr, "\"%s\"\n", (circuit_simulation.plot_settings + current1->positive_terminal)->name );
+				fprintf( file_ptr, "node [shape=square,  style=bold, color=yellow];\n" );
+				fprintf( file_ptr, "\"E%s\"\n", current1->string_name );
+				fprintf( file_ptr, "node [shape=circle,  style=bold, color=black];\n" );
+				fprintf( file_ptr, "\"%s\"\n", (circuit_simulation.plot_settings + current1->negative_terminal)->name );
+				fprintf( file_ptr, "edge [dir=none, style=bold, color=yellow, label=\"+\"];\n" );
+				fprintf( file_ptr, "\"%s\" -> \"E%s\";\n", (circuit_simulation.plot_settings + current1->positive_terminal)->name,
+						current1->string_name );
+				fprintf( file_ptr, "edge [dir=forward, style=bold, color=yellow, label=\"-\"];\n" );
+				fprintf( file_ptr, "\"E%s\" -> \"%s\";\n", current1->string_name,
+						(circuit_simulation.plot_settings + current1->negative_terminal)->name );
+				break;
+                        case VOLTAGE_CONTROLLED_CURRENT_SOURCE:
+				fprintf( file_ptr, "node [shape=circle,  style=bold, color=black];\n" );
+				fprintf( file_ptr, "\"%s\"\n", (circuit_simulation.plot_settings + current1->positive_terminal)->name );
+				fprintf( file_ptr, "node [shape=square,  style=bold, color=cyan];\n" );
+				fprintf( file_ptr, "\"G%s\"\n", current1->string_name );
+				fprintf( file_ptr, "node [shape=circle,  style=bold, color=black];\n" );
+				fprintf( file_ptr, "\"%s\"\n", (circuit_simulation.plot_settings + current1->negative_terminal)->name );
+				fprintf( file_ptr, "edge [dir=none, style=bold, color=cyan, label=\"+\"];\n" );
+				fprintf( file_ptr, "\"%s\" -> \"G%s\";\n", (circuit_simulation.plot_settings + current1->positive_terminal)->name,
+						current1->string_name );
+				fprintf( file_ptr, "edge [dir=forward, style=bold, color=cyan, label=\"-\"];\n" );
+				fprintf( file_ptr, "\"G%s\" -> \"%s\";\n", current1->string_name,
 						(circuit_simulation.plot_settings + current1->negative_terminal)->name );
 				break;
 			case CURRENT_SOURCE:

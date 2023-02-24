@@ -150,6 +150,7 @@ void createMnaSystemDC(void)
 
 				case VOLTAGE_SOURCE:
 				case INDUCTOR:
+                                case SHORT_CIRCUIT:
 
 					group2_index = circuit_simulation.number_of_nodes + group2_counter;
 
@@ -180,11 +181,56 @@ void createMnaSystemDC(void)
 					      }
 					}
 
-					vector_b[group2_index] += current1->type == INDUCTOR ? 0 : current1->value;
+					vector_b[group2_index] += current1->type == INDUCTOR ||  current1->type == SHORT_CIRCUIT ? 0 : current1->value;
 
 					group2_counter++;
 
 					break;
+                                case VOLTAGE_CONTROLLED_CURRENT_SOURCE:
+                                        if (circuit_simulation.matrix_sparsity == SPARSE) {
+					     if(current1 -> positive_terminal) {
+						    if(current1 -> in_positive_terminal) {
+                                                           cs_di_entry(G, current1->positive_terminal - 1, current1 -> in_positive_terminal - 1,  current1->value);
+						    }
+
+						     if(current1 -> in_negative_terminal) {
+                                                           cs_di_entry(G, current1->positive_terminal - 1, current1 -> in_negative_terminal - 1,  -current1->value);
+						    }
+						}
+		
+						if(current1 -> negative_terminal) {
+						    if(current1 -> in_positive_terminal) {
+                                                         cs_di_entry(G, current1->negative_terminal - 1, current1 -> in_positive_terminal - 1,  -current1->value);
+						    }
+
+						     if(current1 -> in_negative_terminal) {
+							   cs_di_entry(G, current1->negative_terminal - 1, current1 -> in_negative_terminal - 1,  current1->value);
+						    }
+						}
+                                        }
+                                        else {
+                                           if(current1 -> positive_terminal) {
+						    if(current1 -> in_positive_terminal) {
+							 matrix_G[(current1->positive_terminal - 1) * dimension + (current1 -> in_positive_terminal - 1)]+=  current1->value;
+						    }
+
+						     if(current1 -> in_negative_terminal) {
+							  matrix_G[(current1->positive_terminal - 1) * dimension + (current1 -> in_negative_terminal - 1)] -=  current1->value;
+						    }
+						}
+		
+						if(current1 -> negative_terminal) {
+						    if(current1 -> in_positive_terminal) {
+							 matrix_G[(current1->negative_terminal - 1) * dimension + (current1 -> in_positive_terminal - 1)] -=  current1->value;
+						    }
+
+						     if(current1 -> in_negative_terminal) {
+							  matrix_G[(current1->negative_terminal - 1) * dimension + (current1 -> in_negative_terminal - 1)] +=  current1->value;
+						    }
+						}
+
+                                        }
+                                        break;
                                 case VOLTAGE_CONTROLLED_VOLTAGE_SOURCE:
                                         group2_index = circuit_simulation.number_of_nodes + group2_counter;
                                         
@@ -508,6 +554,7 @@ void createMnaSystemTransient(int run, double time_step, double fin_time)
 
 				case VOLTAGE_SOURCE:
 				case INDUCTOR:
+                                case SHORT_CIRCUIT:
 
 					group2_index = circuit_simulation.number_of_nodes + group2_counter;
 					
@@ -528,7 +575,7 @@ void createMnaSystemTransient(int run, double time_step, double fin_time)
 										1 / time_step);
 					      }
 					}
-					else
+					else if(current1->type == VOLTAGE_SOURCE)
 					{
 						if (current1->transient != NULL)
 						{
@@ -658,6 +705,7 @@ void createTransientSteps(transientComponent* transient, double time_step, doubl
 	SinImpulse* s = NULL;
 	PulseImpulse* p = NULL;
 	PWLImpulse* pw = NULL;
+        SFFMImpulse *sffm = NULL;
 
 	time_steps = fin_time / time_step;
 
@@ -707,6 +755,12 @@ void createTransientSteps(transientComponent* transient, double time_step, doubl
 				}
 			}
 			break;
+                case SFFM:
+                        sffm = transient->sffm;
+                        for (i = 0, t = 0; i < length; i++, t += time_step) {
+                           transient->vals[i] = sffm->v0 + sffm->va * sin( 2 * M_PI * sffm->fc * t + sffm->mdi * sin( 2 * M_PI * sffm->fs * t));
+                        }
+                        break;
 		case PULSE:
 			p = transient->pulse;
 			for (i = 0, t = 0, k = 0; i < length; i++, t += time_step)
@@ -966,6 +1020,7 @@ void createMnaSystemAC(double f, long int run, long int internal_run) {
 					break;
 
 				case VOLTAGE_SOURCE:
+				case SHORT_CIRCUIT:
 				        group2_index = circuit_simulation.number_of_nodes + group2_counter;
 					
 					if (circuit_simulation.matrix_sparsity == SPARSE)
@@ -996,7 +1051,7 @@ void createMnaSystemAC(double f, long int run, long int internal_run) {
 					      } 
 					}
 					
-					if(run == 0) {
+					if(current1->type == VOLTAGE_SOURCE && run == 0) {
 					    temp_val = 0;
 					    
 					    if(current1 -> ac != NULL) {
@@ -1049,6 +1104,51 @@ void createMnaSystemAC(double f, long int run, long int internal_run) {
 					group2_counter++;
 
 					break;
+                                 case VOLTAGE_CONTROLLED_CURRENT_SOURCE:
+                                        if (circuit_simulation.matrix_sparsity == SPARSE) {
+					     if(current1 -> positive_terminal) {
+						    if(current1 -> in_positive_terminal) {
+                                                           cs_ci_entry(Gcomplex, current1->positive_terminal - 1, current1 -> in_positive_terminal - 1,  current1->value);
+						    }
+
+						     if(current1 -> in_negative_terminal) {
+                                                           cs_ci_entry(Gcomplex, current1->positive_terminal - 1, current1 -> in_negative_terminal - 1,  -current1->value);
+						    }
+						}
+		
+						if(current1 -> negative_terminal) {
+						    if(current1 -> in_positive_terminal) {
+                                                         cs_ci_entry(Gcomplex, current1->negative_terminal - 1, current1 -> in_positive_terminal - 1,  -current1->value);
+						    }
+
+						     if(current1 -> in_negative_terminal) {
+							   cs_ci_entry(Gcomplex, current1->negative_terminal - 1, current1 -> in_negative_terminal - 1,  current1->value);
+						    }
+						}
+                                        }
+                                        else {
+                                           if(current1 -> positive_terminal) {
+						    if(current1 -> in_positive_terminal) {
+							 matrix_Gcomplex[(current1->positive_terminal - 1) * dimension + (current1 -> in_positive_terminal - 1)]+=  current1->value;
+						    }
+
+						     if(current1 -> in_negative_terminal) {
+							  matrix_Gcomplex[(current1->positive_terminal - 1) * dimension + (current1 -> in_negative_terminal - 1)] -=  current1->value;
+						    }
+						}
+		
+						if(current1 -> negative_terminal) {
+						    if(current1 -> in_positive_terminal) {
+							 matrix_Gcomplex[(current1->negative_terminal - 1) * dimension + (current1 -> in_positive_terminal - 1)] -=  current1->value;
+						    }
+
+						     if(current1 -> in_negative_terminal) {
+							  matrix_Gcomplex[(current1->negative_terminal - 1) * dimension + (current1 -> in_negative_terminal - 1)] +=  current1->value;
+						    }
+						}
+
+                                        }
+                                        break;
                                  case VOLTAGE_CONTROLLED_VOLTAGE_SOURCE:
                                         group2_index = circuit_simulation.number_of_nodes + group2_counter;
 

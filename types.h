@@ -4,16 +4,16 @@
 
 #define NAME_SIZE 256
 
-#define ELEMENTS 10
+#define ELEMENTS 11
 
 #define SIZE_OF_LINE 3000
 
 #define ZERO 1e-12
 
-#define DEBUG 1
+#define DEBUG 0
 
 
-typedef enum {VOLTAGE_SOURCE, CURRENT_SOURCE, RESISTANCE, CAPACITOR, INDUCTOR, DIODE, BJT, MOS, VOLTAGE_CONTROLLED_VOLTAGE_SOURCE, VOLTAGE_CONTROLLED_CURRENT_SOURCE} ELEMENT_TYPE;
+typedef enum {VOLTAGE_SOURCE, CURRENT_SOURCE, RESISTANCE, CAPACITOR, INDUCTOR, DIODE, BJT, MOS, VOLTAGE_CONTROLLED_VOLTAGE_SOURCE, VOLTAGE_CONTROLLED_CURRENT_SOURCE, SHORT_CIRCUIT} ELEMENT_TYPE;
 
 typedef enum {SWEEP_OFF, SWEEP_VOLTAGE_SOURCE, SWEEP_CURRENT_SOURCE} SWEEP_OPT;
 
@@ -25,7 +25,7 @@ typedef enum {DIRECT,ITERATIVE} LINEAR_SOLVING_METHOD;
 
 typedef enum {BACKWARD_EULER,TRAPEZOIDAL} DIFFERENTIAL_EQUATION_SOLVING_METHOD;
 
-typedef enum {EXP, SIN, PULSE, PWL} IMPULSE;
+typedef enum {EXP, SIN, PULSE, PWL, SFFM} IMPULSE;
 
 typedef enum {GNUPLOT_OFF, LINES_POINTS, LINES} GNUPLOT_OPT;
 
@@ -73,12 +73,21 @@ typedef struct { // spice format piece wise linear inputs
    double *i;
 } PWLImpulse;
 
+typedef struct { // spice format single frequency fm
+    double v0;
+    double va;
+    double fc;
+    double mdi;
+    double fs;
+} SFFMImpulse;
+
 typedef struct {
     IMPULSE impulse; // type of impulse, exp, sin, pulse, or piece wise linear
     ExpImpulse *exp;
     SinImpulse *sin;
     PulseImpulse *pulse;
     PWLImpulse *pwl;
+    SFFMImpulse *sffm;
     double *vals; // precomputed values for the transient analysis
 } transientComponent;
 

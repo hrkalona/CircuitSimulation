@@ -127,6 +127,11 @@ void ACAnalysis(void)
 		      fprintf( p_file, "VC Voltage Sources: %7d\n", circuit_simulation.number_of_elements[ VOLTAGE_CONTROLLED_VOLTAGE_SOURCE] );
 	      }
 
+                if (circuit_simulation.number_of_elements[ VOLTAGE_CONTROLLED_CURRENT_SOURCE])
+	      {
+		      fprintf( p_file, "VC Current Sources: %7d\n", circuit_simulation.number_of_elements[  VOLTAGE_CONTROLLED_CURRENT_SOURCE] );
+	      }
+
 	      if (circuit_simulation.number_of_elements[DIODE])
 	      {
 		      fprintf( p_file, "         Diodes: %7d\n", circuit_simulation.number_of_elements[DIODE] );
@@ -537,6 +542,12 @@ void DCAnalysis(void)
 		      fprintf( p_file, "VC Voltage Sources: %7d\n", circuit_simulation.number_of_elements[ VOLTAGE_CONTROLLED_VOLTAGE_SOURCE] );
 	      }
 
+        
+          if (circuit_simulation.number_of_elements[ VOLTAGE_CONTROLLED_CURRENT_SOURCE])
+	      {
+		      fprintf( p_file, "VC Current Sources: %7d\n", circuit_simulation.number_of_elements[  VOLTAGE_CONTROLLED_CURRENT_SOURCE] );
+	      }
+
 	if (circuit_simulation.number_of_elements[DIODE])
 	{
 		fprintf( p_file, "         Diodes: %7d\n", circuit_simulation.number_of_elements[DIODE] );
@@ -758,6 +769,11 @@ void TransientAnalysis(void)
                   if (circuit_simulation.number_of_elements[ VOLTAGE_CONTROLLED_VOLTAGE_SOURCE])
 	      {
 		      fprintf( p_file, "VC Voltage Sources: %7d\n", circuit_simulation.number_of_elements[ VOLTAGE_CONTROLLED_VOLTAGE_SOURCE] );
+	      }
+
+                  if (circuit_simulation.number_of_elements[ VOLTAGE_CONTROLLED_CURRENT_SOURCE])
+	      {
+		      fprintf( p_file, "VC Current Sources: %7d\n", circuit_simulation.number_of_elements[  VOLTAGE_CONTROLLED_CURRENT_SOURCE] );
 	      }
 
 		if (circuit_simulation.number_of_elements[DIODE])
@@ -1131,6 +1147,11 @@ void DCSweep(void)
                if (circuit_simulation.number_of_elements[ VOLTAGE_CONTROLLED_VOLTAGE_SOURCE])
 	      {
 		      fprintf( p_file, "VC Voltage Sources: %7d\n", circuit_simulation.number_of_elements[ VOLTAGE_CONTROLLED_VOLTAGE_SOURCE] );
+	      }
+
+                if (circuit_simulation.number_of_elements[ VOLTAGE_CONTROLLED_CURRENT_SOURCE])
+	      {
+		      fprintf( p_file, "VC Current Sources: %7d\n", circuit_simulation.number_of_elements[  VOLTAGE_CONTROLLED_CURRENT_SOURCE] );
 	      }
               
               if (circuit_simulation.number_of_elements[DIODE])
