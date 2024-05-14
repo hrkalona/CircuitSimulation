@@ -1,4 +1,27 @@
-#include "circuit_simulation.h" 
+#include "circuit_simulation.h"
+
+
+void stamp(double * M, cs * Ms, int dimension, int row, int col, double value) {
+
+	if (circuit_simulation.matrix_sparsity == SPARSE) {
+		cs_di_entry(Ms, row, col, value);
+	}
+	else {
+		M[row * dimension + col] += value;
+	}
+
+}
+
+void stampc(double complex * M, cs_ci * Ms, int dimension, int row, int col, double complex value) {
+
+	if (circuit_simulation.matrix_sparsity == SPARSE) {
+		cs_ci_entry(Ms, row, col, value);
+	}
+	else {
+		M[row * dimension + col] += value;
+	}
+
+}
 
 void createMnaSystemDC(void)
 {
@@ -46,75 +69,41 @@ void createMnaSystemDC(void)
 			{
 
 				case RESISTANCE:
-				       if (circuit_simulation.matrix_sparsity == SPARSE) {
-					    if (current1->positive_terminal)
+				       if (current1->positive_terminal)
 					    {
-						    cs_di_entry(G, current1->positive_terminal - 1, current1->positive_terminal - 1, 1 / (current1->value));
+							stamp(matrix_G, G, dimension, current1->positive_terminal - 1, current1->positive_terminal - 1, 1 / (current1->value));
 					    }
 
 					    if (current1->negative_terminal)
 					    {
-						    cs_di_entry(G, current1->negative_terminal - 1, current1->negative_terminal - 1, 1 / (current1->value));
+							stamp(matrix_G, G, dimension, current1->negative_terminal - 1, current1->negative_terminal - 1, 1 / (current1->value));
 					    }
 
 					    if (current1->positive_terminal && current1->negative_terminal)
 					    {
-						    cs_di_entry(G, current1->positive_terminal - 1, current1->negative_terminal - 1, -1 / (current1->value));
-						    cs_di_entry(G, current1->negative_terminal - 1, current1->positive_terminal - 1, -1 / (current1->value));
+							stamp(matrix_G, G, dimension, current1->positive_terminal - 1, current1->negative_terminal - 1, -1 / (current1->value));
+							stamp(matrix_G, G, dimension, current1->negative_terminal - 1, current1->positive_terminal - 1, -1 / (current1->value));
 					    }
                                             
-                                             if(current1->isG2) {
-                                               group2_index = circuit_simulation.number_of_nodes + group2_counter;
-                                              if (current1->positive_terminal)
-					      {
-						      cs_di_entry(G, current1->positive_terminal - 1, group2_index, 1.0);
-						      cs_di_entry(G, group2_index, current1->positive_terminal - 1, 1.0);
-					      }
+                        if(current1->isG2) {
+                            group2_index = circuit_simulation.number_of_nodes + group2_counter;
+                            
+							if (current1->positive_terminal)
+					        {
+							  stamp(matrix_G, G, dimension, current1->positive_terminal - 1, group2_index, 1.0);
+							  stamp(matrix_G, G, dimension, group2_index, current1->positive_terminal - 1, 1.0);
+					        }
 
-					      if (current1->negative_terminal)
-					      {
-						      cs_di_entry(G, current1->negative_terminal - 1, group2_index, -1.0);
-						      cs_di_entry(G, group2_index, current1->negative_terminal - 1, -1.0);
-					      }
-                                              cs_di_entry(G, group2_index, group2_index, -current1->value);
+					      	if (current1->negative_terminal)
+							{						
+							  stamp(matrix_G, G, dimension, current1->negative_terminal - 1, group2_index, -1.0);
+							  stamp(matrix_G, G, dimension, group2_index, current1->negative_terminal - 1, -1.0);
+							}
+
+                            stamp(matrix_G, G, dimension, group2_index, group2_index, -current1->value);
                     
-                                              group2_counter++;
-                                            }
-				       }
-				       else {
-					    if (current1->positive_terminal)
-					    {
-						    matrix_G[(current1->positive_terminal - 1) * dimension + (current1->positive_terminal - 1)] += 1 / (current1->value);
-					    }
-
-					    if (current1->negative_terminal)
-					    {
-						    matrix_G[(current1->negative_terminal - 1) * dimension + (current1->negative_terminal - 1)] += 1 / (current1->value);
-					    }
-
-					    if (current1->positive_terminal && current1->negative_terminal)
-					    {
-						    matrix_G[(current1->positive_terminal - 1) * dimension + (current1->negative_terminal - 1)] -= 1 / (current1->value);
-						    matrix_G[(current1->negative_terminal - 1) * dimension + (current1->positive_terminal - 1)] -= 1 / (current1->value);
-					    }
-                                            
-                                            if(current1->isG2) {
-                                              group2_index = circuit_simulation.number_of_nodes + group2_counter;
-                                              if (current1->positive_terminal)
-					      {
-						      matrix_G[(current1->positive_terminal - 1) * dimension + group2_index] += 1;
-						      matrix_G[group2_index * dimension + (current1->positive_terminal - 1)] += 1;
-					      }
-
-					      if (current1->negative_terminal)
-					      {
-						      matrix_G[(current1->negative_terminal - 1) * dimension + group2_index] -= 1;
-						      matrix_G[group2_index * dimension + (current1->negative_terminal - 1)] -= 1;
-					      }
-                                              matrix_G[group2_index * dimension + group2_index] -= current1->value;
-                                              group2_counter++;
-                                            }
-				       }
+                            group2_counter++;
+                        }
 
 					break;
 
@@ -132,53 +121,30 @@ void createMnaSystemDC(void)
 
 
 					break;
-                                case CAPACITOR:
-                                         if(current1->isG2) {
-                                              group2_index = circuit_simulation.number_of_nodes + group2_counter;
-
-                                              if (circuit_simulation.matrix_sparsity == SPARSE) {
-						 
-                                                       cs_di_entry(G, group2_index, group2_index, 1.0);
-                                              }
-                                              else {
-
-		                                      matrix_G[group2_index * dimension + group2_index] += 1;
-                                              }
-                                              group2_counter++;
-                                            }
-                                        break;
+				case CAPACITOR:
+					if(current1->isG2) {
+						group2_index = circuit_simulation.number_of_nodes + group2_counter;
+						stamp(matrix_G, G, dimension, group2_index, group2_index, 1.0);
+						group2_counter++;
+					}
+					break;
 
 				case VOLTAGE_SOURCE:
 				case INDUCTOR:
-                                case SHORT_CIRCUIT:
+				case SHORT_CIRCUIT:
 
 					group2_index = circuit_simulation.number_of_nodes + group2_counter;
 
-					if (circuit_simulation.matrix_sparsity == SPARSE) {
-					      if (current1->positive_terminal)
-					      {
-						      cs_di_entry(G, current1->positive_terminal - 1, group2_index, 1.0);
-						      cs_di_entry(G, group2_index, current1->positive_terminal - 1, 1.0);
-					      }
-
-					      if (current1->negative_terminal)
-					      {
-						      cs_di_entry(G, current1->negative_terminal - 1, group2_index, -1.0);
-						      cs_di_entry(G, group2_index, current1->negative_terminal - 1, -1.0);
-					      }
+					if (current1->positive_terminal)
+					{
+						stamp(matrix_G, G, dimension, current1->positive_terminal - 1, group2_index, 1.0);
+						stamp(matrix_G, G, dimension, group2_index, current1->positive_terminal - 1, 1.0);
 					}
-					else {
-					      if (current1->positive_terminal)
-					      {
-						      matrix_G[(current1->positive_terminal - 1) * dimension + group2_index] += 1;
-						      matrix_G[group2_index * dimension + (current1->positive_terminal - 1)] += 1;
-					      }
 
-					      if (current1->negative_terminal)
-					      {
-						      matrix_G[(current1->negative_terminal - 1) * dimension + group2_index] -= 1;
-						      matrix_G[group2_index * dimension + (current1->negative_terminal - 1)] -= 1;
-					      }
+					if (current1->negative_terminal)
+					{
+						stamp(matrix_G, G, dimension, current1->negative_terminal - 1, group2_index, -1.0);
+						stamp(matrix_G, G, dimension, group2_index, current1->negative_terminal - 1, -1.0);
 					}
 
 					vector_b[group2_index] += current1->type == INDUCTOR ||  current1->type == SHORT_CIRCUIT ? 0 : current1->value;
@@ -186,100 +152,52 @@ void createMnaSystemDC(void)
 					group2_counter++;
 
 					break;
-                                case VOLTAGE_CONTROLLED_CURRENT_SOURCE:
-                                        if (circuit_simulation.matrix_sparsity == SPARSE) {
-					     if(current1 -> positive_terminal) {
-						    if(current1 -> in_positive_terminal) {
-                                                           cs_di_entry(G, current1->positive_terminal - 1, current1 -> in_positive_terminal - 1,  current1->value);
-						    }
-
-						     if(current1 -> in_negative_terminal) {
-                                                           cs_di_entry(G, current1->positive_terminal - 1, current1 -> in_negative_terminal - 1,  -current1->value);
-						    }
-						}
-		
-						if(current1 -> negative_terminal) {
-						    if(current1 -> in_positive_terminal) {
-                                                         cs_di_entry(G, current1->negative_terminal - 1, current1 -> in_positive_terminal - 1,  -current1->value);
-						    }
-
-						     if(current1 -> in_negative_terminal) {
-							   cs_di_entry(G, current1->negative_terminal - 1, current1 -> in_negative_terminal - 1,  current1->value);
-						    }
-						}
-                                        }
-                                        else {
-                                           if(current1 -> positive_terminal) {
-						    if(current1 -> in_positive_terminal) {
-							 matrix_G[(current1->positive_terminal - 1) * dimension + (current1 -> in_positive_terminal - 1)]+=  current1->value;
-						    }
-
-						     if(current1 -> in_negative_terminal) {
-							  matrix_G[(current1->positive_terminal - 1) * dimension + (current1 -> in_negative_terminal - 1)] -=  current1->value;
-						    }
-						}
-		
-						if(current1 -> negative_terminal) {
-						    if(current1 -> in_positive_terminal) {
-							 matrix_G[(current1->negative_terminal - 1) * dimension + (current1 -> in_positive_terminal - 1)] -=  current1->value;
-						    }
-
-						     if(current1 -> in_negative_terminal) {
-							  matrix_G[(current1->negative_terminal - 1) * dimension + (current1 -> in_negative_terminal - 1)] +=  current1->value;
-						    }
+				case VOLTAGE_CONTROLLED_CURRENT_SOURCE:
+					if(current1 -> positive_terminal) {
+						if(current1 -> in_positive_terminal) {
+							stamp(matrix_G, G, dimension, current1->positive_terminal - 1, current1 -> in_positive_terminal - 1,  current1->value);
 						}
 
-                                        }
-                                        break;
-                                case VOLTAGE_CONTROLLED_VOLTAGE_SOURCE:
-                                        group2_index = circuit_simulation.number_of_nodes + group2_counter;
+						if(current1 -> in_negative_terminal) {
+							stamp(matrix_G, G, dimension, current1->positive_terminal - 1, current1 -> in_negative_terminal - 1,  -current1->value);
+						}
+					}
+	
+					if(current1 -> negative_terminal) {
+						if(current1 -> in_positive_terminal) {
+							stamp(matrix_G, G, dimension, current1->negative_terminal - 1, current1 -> in_positive_terminal - 1,  -current1->value);
+						}
+
+						if(current1 -> in_negative_terminal) {
+							stamp(matrix_G, G, dimension, current1->negative_terminal - 1, current1 -> in_negative_terminal - 1,  current1->value);
+						}
+					}
+					break;
+				case VOLTAGE_CONTROLLED_VOLTAGE_SOURCE:
+					group2_index = circuit_simulation.number_of_nodes + group2_counter;
                                         
-                                        if (circuit_simulation.matrix_sparsity == SPARSE) {
-                                              if (current1->positive_terminal)
-					      {
-						      cs_di_entry(G, current1->positive_terminal - 1, group2_index, 1.0);
-						      cs_di_entry(G, group2_index, current1->positive_terminal - 1, 1.0);
-					      }
+					if (current1->positive_terminal)
+					{
+						stamp(matrix_G, G, dimension, current1->positive_terminal - 1, group2_index, 1.0);
+						stamp(matrix_G, G, dimension, group2_index, current1->positive_terminal - 1, 1.0);
+					}
 
-					      if (current1->negative_terminal)
-					      {
-						      cs_di_entry(G, current1->negative_terminal - 1, group2_index, -1.0);
-						      cs_di_entry(G, group2_index, current1->negative_terminal - 1, -1.0);
-					      }
+					if (current1->negative_terminal)
+					{
+						stamp(matrix_G, G, dimension, current1->negative_terminal - 1, group2_index, -1.0);
+						stamp(matrix_G, G, dimension, group2_index, current1->negative_terminal - 1, -1.0);
+					}
 
                                               
-                                               if (current1->in_positive_terminal) {
-                                                    cs_di_entry(G, group2_index, current1->in_positive_terminal - 1, -current1->value);                                             
-                  
-                                               }
+					if (current1->in_positive_terminal) {
+						stamp(matrix_G, G, dimension, group2_index, current1->in_positive_terminal - 1, -current1->value);                                             
+					}
 
-                                                if (current1->in_negative_terminal) {                                             
-                                                    cs_di_entry(G, group2_index, current1->in_negative_terminal - 1, current1->value);       
-                                               }
-
-                                        }
-                                        else {
-                                             if (current1->positive_terminal) {
-                                                 matrix_G[(current1->positive_terminal - 1) * dimension + group2_index] += 1;
-                                                 matrix_G[group2_index * dimension + (current1->positive_terminal - 1)] += 1;
-                                             }
-
-                                              if (current1->negative_terminal)
-					      {
-						      matrix_G[(current1->negative_terminal - 1) * dimension + group2_index] -= 1;
-						      matrix_G[group2_index * dimension + (current1->negative_terminal - 1)] -= 1;
-					      }
-
-                                               if (current1->in_positive_terminal) {                                             
-                                                 matrix_G[group2_index * dimension + (current1->in_positive_terminal - 1)] -=  current1->value;
-                                               }
-
-                                                if (current1->in_negative_terminal) {                                             
-                                                 matrix_G[group2_index * dimension + (current1->in_negative_terminal - 1)] =  current1->value;
-                                               }
-                                        }
-                                        group2_counter++;
-                                        break;
+					if (current1->in_negative_terminal) {                                             
+						stamp(matrix_G, G, dimension, group2_index, current1->in_negative_terminal - 1, current1->value);       
+					}
+					group2_counter++;
+					break;
 				default:
 					break;
 
@@ -432,113 +350,57 @@ void createMnaSystemTransient(int run, double time_step, double fin_time)
 			{
 
 				case CAPACITOR:                               
-					if (circuit_simulation.matrix_sparsity == SPARSE)
-					{			  
-					      if (current1->positive_terminal)
-					      {
-						      cs_di_entry(C, current1->positive_terminal - 1, current1->positive_terminal - 1, current1->value
-								      * (circuit_simulation.diff_method == TRAPEZOIDAL ?
-										      2 / time_step :
-										      1 / time_step));
-					      }
-
-					      if (current1->negative_terminal)
-					      {
-						      cs_di_entry(C, current1->negative_terminal - 1, current1->negative_terminal - 1, current1->value
-								      * (circuit_simulation.diff_method == TRAPEZOIDAL ?
-										      2 / time_step :
-										      1 / time_step));
-					      }
-
-					      if (current1->positive_terminal && current1->negative_terminal)
-					      {
-						      
-						      cs_di_entry(C, current1->positive_terminal - 1, current1->negative_terminal - 1, -current1->value
-								      * (circuit_simulation.diff_method == TRAPEZOIDAL ?
-										      2 / time_step :
-										      1 / time_step));
-						      
-						      cs_di_entry(C, current1->negative_terminal - 1, current1->positive_terminal - 1, -current1->value
-								      * (circuit_simulation.diff_method == TRAPEZOIDAL ?
-										      2 / time_step :
-										      1 / time_step));
-					      }
+					if (current1->positive_terminal)
+					{
+					
+						stamp(matrix_C, C, dimension, current1->positive_terminal - 1, current1->positive_terminal - 1, current1->value
+								* (circuit_simulation.diff_method == TRAPEZOIDAL ?
+										2 / time_step :
+										1 / time_step));
 					}
-					else {
-					      if (current1->positive_terminal)
-					      {
-						      matrix_C[(current1->positive_terminal - 1) * dimension + (current1->positive_terminal - 1)] += current1->value
-								      * (circuit_simulation.diff_method == TRAPEZOIDAL ?
-										      2 / time_step :
-										      1 / time_step);
-					      }
 
-					      if (current1->negative_terminal)
-					      {
-						      matrix_C[(current1->negative_terminal - 1) * dimension + (current1->negative_terminal - 1)] += current1->value
-								      * (circuit_simulation.diff_method == TRAPEZOIDAL ?
-										      2 / time_step :
-										      1 / time_step);
-					      }
+					if (current1->negative_terminal)
+					{
+						stamp(matrix_C, C, dimension, current1->negative_terminal - 1, current1->negative_terminal - 1, current1->value
+								* (circuit_simulation.diff_method == TRAPEZOIDAL ?
+										2 / time_step :
+										1 / time_step));
+					}
 
-					      if (current1->positive_terminal && current1->negative_terminal)
-					      {
-
-						      matrix_C[(current1->positive_terminal - 1) * dimension + (current1->negative_terminal - 1)] -= current1->value
-								      * (circuit_simulation.diff_method == TRAPEZOIDAL ?
-										      2 / time_step :
-										      1 / time_step);
-						      matrix_C[(current1->negative_terminal - 1) * dimension + (current1->positive_terminal - 1)] -= current1->value
-								      * (circuit_simulation.diff_method == TRAPEZOIDAL ?
-										      2 / time_step :
-										      1 / time_step);
-					      }
+					if (current1->positive_terminal && current1->negative_terminal)
+					{
+						
+						stamp(matrix_C, C, dimension, current1->positive_terminal - 1, current1->negative_terminal - 1, -current1->value
+								* (circuit_simulation.diff_method == TRAPEZOIDAL ?
+										2 / time_step :
+										1 / time_step));
+						
+						stamp(matrix_C, C, dimension, current1->negative_terminal - 1, current1->positive_terminal - 1, -current1->value
+								* (circuit_simulation.diff_method == TRAPEZOIDAL ?
+										2 / time_step :
+										1 / time_step));
 					}
 
 
-                                         if(current1->isG2) {
-                                              group2_index = circuit_simulation.number_of_nodes + group2_counter;
+					if(current1->isG2) {
+						group2_index = circuit_simulation.number_of_nodes + group2_counter;
+						if (current1->positive_terminal) {
+							stamp(matrix_C, C, dimension, group2_index, current1->positive_terminal - 1, -current1->value
+								* (circuit_simulation.diff_method == TRAPEZOIDAL ?
+										2 / time_step :
+										1 / time_step));
+						}
 
-                                              if (circuit_simulation.matrix_sparsity == SPARSE) {
-						 
-                                                       
-                                                       if (current1->positive_terminal) {
-                                                            cs_di_entry(C, group2_index, current1->positive_terminal - 1, -current1->value
-								      * (circuit_simulation.diff_method == TRAPEZOIDAL ?
-										      2 / time_step :
-										      1 / time_step));
-                                                       }
-
-                                                        if (current1->negative_terminal) {
- 								cs_di_entry(C, group2_index, current1->negative_terminal - 1, current1->value
-								      * (circuit_simulation.diff_method == TRAPEZOIDAL ?
-										      2 / time_step :
-										      1 / time_step));
-                                                        }
-                                              }
-                                              else {
-
-                                                       if (current1->positive_terminal) {
-                                                             matrix_C[group2_index * dimension + (current1->positive_terminal - 1)] -= current1->value
-								      * (circuit_simulation.diff_method == TRAPEZOIDAL ?
-										      2 / time_step :
-										      1 / time_step);
-                                                       }
-
-                                                        if (current1->negative_terminal) {
-
- 						             matrix_C[group2_index * dimension + (current1->negative_terminal - 1)] += current1->value
-								      * (circuit_simulation.diff_method == TRAPEZOIDAL ?
-										      2 / time_step :
-										      1 / time_step);
-                                                        }
-		                                     
-                                              }
-
+						if (current1->negative_terminal) {
+							stamp(matrix_C, C, dimension, group2_index, current1->negative_terminal - 1, current1->value
+									* (circuit_simulation.diff_method == TRAPEZOIDAL ?
+											2 / time_step :
+											1 / time_step));
+						}
                                               
-					      sources_counter++;
-                                              group2_counter++;
-                                            }
+					    sources_counter++;
+						group2_counter++;
+					}
 
 					break;
 
@@ -554,26 +416,16 @@ void createMnaSystemTransient(int run, double time_step, double fin_time)
 
 				case VOLTAGE_SOURCE:
 				case INDUCTOR:
-                                case SHORT_CIRCUIT:
+				case SHORT_CIRCUIT:
 
 					group2_index = circuit_simulation.number_of_nodes + group2_counter;
 					
 					if (current1->type == INDUCTOR)
 					{	
-					      if (circuit_simulation.matrix_sparsity == SPARSE)
-					      {
-						      cs_di_entry(C, group2_index, group2_index, -current1->value
+					      stamp(matrix_C, C, dimension, group2_index, group2_index, -current1->value
 								      * (circuit_simulation.diff_method == TRAPEZOIDAL ?
 										      2 / time_step :
 										      1 / time_step));
-					      }
-					      else {
-						      
-						      matrix_C[group2_index * dimension + group2_index] -= current1->value
-								* (circuit_simulation.diff_method == TRAPEZOIDAL ?
-										2 / time_step :
-										1 / time_step);
-					      }
 					}
 					else if(current1->type == VOLTAGE_SOURCE)
 					{
@@ -584,17 +436,17 @@ void createMnaSystemTransient(int run, double time_step, double fin_time)
 					}
 					
 
-                                        if(current1->type == VOLTAGE_SOURCE) {
+					if(current1->type == VOLTAGE_SOURCE) {
 						sources[sources_counter] = current1;
-                                        }
+					}
 					sources_counter++;
 					group2_counter++;
 
 					break;
 				case RESISTANCE:
-                                        if(current1->isG2) {
+					if(current1->isG2) {
 						sources_counter++;
-		                                group2_counter++;
+						group2_counter++;
 					}
 					break;
                                       
@@ -626,7 +478,7 @@ void createMnaSystemTransient(int run, double time_step, double fin_time)
 		      if (circuit_simulation.diff_method == TRAPEZOIDAL)
 		      {
 			      memcpy( temp_matrix2, matrix_G, dimension * dimension * sizeof(double) );  // temp_matrix2 = G
-		              cblas_daxpy( dimension * dimension, -1.0, matrix_C, 1, temp_matrix2, 1 );  // temp_matrix2 = temp_matrix2 - C  <=>  temp_matrix = G - C
+				  cblas_daxpy( dimension * dimension, -1.0, matrix_C, 1, temp_matrix2, 1 );  // temp_matrix2 = temp_matrix2 - C  <=>  temp_matrix = G - C
 		      }  
 		}
 		
@@ -755,12 +607,12 @@ void createTransientSteps(transientComponent* transient, double time_step, doubl
 				}
 			}
 			break;
-                case SFFM:
-                        sffm = transient->sffm;
-                        for (i = 0, t = 0; i < length; i++, t += time_step) {
-                           transient->vals[i] = sffm->v0 + sffm->va * sin( 2 * M_PI * sffm->fc * t + sffm->mdi * sin( 2 * M_PI * sffm->fs * t));
-                        }
-                        break;
+		case SFFM:
+			sffm = transient->sffm;
+			for (i = 0, t = 0; i < length; i++, t += time_step) {
+				transient->vals[i] = sffm->v0 + sffm->va * sin( 2 * M_PI * sffm->fc * t + sffm->mdi * sin( 2 * M_PI * sffm->fs * t));
+			}
+			break;
 		case PULSE:
 			p = transient->pulse;
 			for (i = 0, t = 0, k = 0; i < length; i++, t += time_step)
@@ -865,340 +717,192 @@ void createMnaSystemAC(double f, long int run, long int internal_run) {
 
 				case RESISTANCE:
 
-					if (circuit_simulation.matrix_sparsity == SPARSE)
+					if (current1->positive_terminal)
 					{
-					      if (current1->positive_terminal)
-					      {
-						      cs_ci_entry (Gcomplex, current1->positive_terminal - 1, current1->positive_terminal - 1, 1 / (current1->value));
-					      }
-
-					      if (current1->negative_terminal)
-					      {
-						      cs_ci_entry (Gcomplex, current1->negative_terminal - 1, current1->negative_terminal - 1, 1 / (current1->value));
-					      }
-
-					      if (current1->positive_terminal && current1->negative_terminal)
-					      {
-						      
-						      cs_ci_entry (Gcomplex, current1->positive_terminal - 1, current1->negative_terminal - 1, -1 / (current1->value));
-						      cs_ci_entry (Gcomplex, current1->negative_terminal - 1, current1->positive_terminal - 1, -1 / (current1->value));
-					      }
-
-                                              
-                                             if(current1->isG2) {
-                                               group2_index = circuit_simulation.number_of_nodes + group2_counter;
-                                              if (current1->positive_terminal)
-					      {
-						        cs_ci_entry(Gcomplex, current1->positive_terminal - 1, group2_index, 1.0);
-						        cs_ci_entry(Gcomplex, group2_index, current1->positive_terminal - 1, 1.0);
-					      }
-
-					      if (current1->negative_terminal)
-					      {
-						        cs_ci_entry(Gcomplex, current1->negative_terminal - 1, group2_index, -1.0);
-						        cs_ci_entry(Gcomplex, group2_index, current1->negative_terminal - 1, -1.0);
-					      }
-                                                cs_ci_entry(Gcomplex, group2_index, group2_index, -current1->value);
-                    
-                                              group2_counter++;
-                                            }
+						stampc(matrix_Gcomplex, Gcomplex, dimension, current1->positive_terminal - 1, current1->positive_terminal - 1, 1 / (current1->value));
 					}
-					else {
-					      if (current1->positive_terminal)
-					      {
-						      matrix_Gcomplex[(current1->positive_terminal - 1) * dimension + (current1->positive_terminal - 1)] += 1 / (current1->value);
-					      }
 
-					      if (current1->negative_terminal)
-					      {
-						      matrix_Gcomplex[(current1->negative_terminal - 1) * dimension + (current1->negative_terminal - 1)] += 1 / (current1->value);
-					      }
+					if (current1->negative_terminal)
+					{
+						stampc(matrix_Gcomplex, Gcomplex, dimension, current1->negative_terminal - 1, current1->negative_terminal - 1, 1 / (current1->value));
+					}
 
-					      if (current1->positive_terminal && current1->negative_terminal)
-					      {
-						      matrix_Gcomplex[(current1->positive_terminal - 1) * dimension + (current1->negative_terminal - 1)] -= 1 / (current1->value);
-						      matrix_Gcomplex[(current1->negative_terminal - 1) * dimension + (current1->positive_terminal - 1)] -= 1 / (current1->value);
-					      }
+					if (current1->positive_terminal && current1->negative_terminal)
+					{
+						
+						stampc(matrix_Gcomplex, Gcomplex, dimension, current1->positive_terminal - 1, current1->negative_terminal - 1, -1 / (current1->value));
+						stampc(matrix_Gcomplex, Gcomplex, dimension, current1->negative_terminal - 1, current1->positive_terminal - 1, -1 / (current1->value));
+					}
 
-                                                  
-                                            if(current1->isG2) {
-                                              group2_index = circuit_simulation.number_of_nodes + group2_counter;
-                                              if (current1->positive_terminal)
-					      {
-						       matrix_Gcomplex[(current1->positive_terminal - 1) * dimension + group2_index] += 1;
-						       matrix_Gcomplex[group2_index * dimension + (current1->positive_terminal - 1)] += 1;
-					      }
+										
+					if(current1->isG2) {
+						group2_index = circuit_simulation.number_of_nodes + group2_counter;
+						if (current1->positive_terminal)
+						{
+							stampc(matrix_Gcomplex, Gcomplex, dimension, current1->positive_terminal - 1, group2_index, 1.0);
+							stampc(matrix_Gcomplex, Gcomplex, dimension, group2_index, current1->positive_terminal - 1, 1.0);
+						}
 
-					      if (current1->negative_terminal)
-					      {
-						       matrix_Gcomplex[(current1->negative_terminal - 1) * dimension + group2_index] -= 1;
-						       matrix_Gcomplex[group2_index * dimension + (current1->negative_terminal - 1)] -= 1;
-					      }
-                                               matrix_Gcomplex[group2_index * dimension + group2_index] -= current1->value;
-                                              group2_counter++;
-                                            }
+						if (current1->negative_terminal)
+						{
+							stampc(matrix_Gcomplex, Gcomplex, dimension, current1->negative_terminal - 1, group2_index, -1.0);
+							stampc(matrix_Gcomplex, Gcomplex, dimension, group2_index, current1->negative_terminal - 1, -1.0);
+						}
+
+						stampc(matrix_Gcomplex, Gcomplex, dimension, group2_index, group2_index, -current1->value);
+				
+						group2_counter++;
 					}
 
 					break;
 					
 				case CAPACITOR:
-					if (circuit_simulation.matrix_sparsity == SPARSE)
+					if (current1->positive_terminal)
 					{
-					      if (current1->positive_terminal)
-					      {
-						      cs_ci_entry (Gcomplex, current1->positive_terminal - 1, current1->positive_terminal - 1, current1->value * omega * I);
-					      }
-
-					      if (current1->negative_terminal)
-					      {
-						      cs_ci_entry (Gcomplex, current1->negative_terminal - 1, current1->negative_terminal - 1, current1->value * omega * I);
-					      }
-
-					      if (current1->positive_terminal && current1->negative_terminal)
-					      {
-						      cs_ci_entry (Gcomplex, current1->positive_terminal - 1, current1->negative_terminal - 1, 0.0 -current1->value * omega * I);
-						      cs_ci_entry (Gcomplex, current1->negative_terminal - 1, current1->positive_terminal - 1, 0.0 -current1->value * omega * I);
-					      }
-					}
-					else {
-					      if (current1->positive_terminal)
-					      {
-						      matrix_Gcomplex[(current1->positive_terminal - 1) * dimension + (current1->positive_terminal - 1)] += current1->value * omega * I;
-					      }
-
-					      if (current1->negative_terminal)
-					      {
-						      matrix_Gcomplex[(current1->negative_terminal - 1) * dimension + (current1->negative_terminal - 1)] += current1->value * omega * I;
-					      }
-
-					      if (current1->positive_terminal && current1->negative_terminal)
-					      {			
-						      matrix_Gcomplex[(current1->positive_terminal - 1) * dimension + (current1->negative_terminal - 1)] -= current1->value * omega * I;
-						      matrix_Gcomplex[(current1->negative_terminal - 1) * dimension + (current1->positive_terminal - 1)] -= current1->value * omega * I;
-					      }
+						stampc(matrix_Gcomplex, Gcomplex, dimension, current1->positive_terminal - 1, current1->positive_terminal - 1, current1->value * omega * I);
 					}
 
-                                         if(current1->isG2) {
-                                              group2_index = circuit_simulation.number_of_nodes + group2_counter;
+					if (current1->negative_terminal)
+					{
+						stampc(matrix_Gcomplex, Gcomplex, dimension, current1->negative_terminal - 1, current1->negative_terminal - 1, current1->value * omega * I);
+					}
 
-                                              if (circuit_simulation.matrix_sparsity == SPARSE) {
-						 
-                                                       cs_ci_entry(Gcomplex, group2_index, group2_index, 1.0);
-                                              }
-                                              else {
+					if (current1->positive_terminal && current1->negative_terminal)
+					{
+						stampc(matrix_Gcomplex, Gcomplex, dimension, current1->positive_terminal - 1, current1->negative_terminal - 1, 0.0 -current1->value * omega * I);
+						stampc(matrix_Gcomplex, Gcomplex, dimension, current1->negative_terminal - 1, current1->positive_terminal - 1, 0.0 -current1->value * omega * I);
+					}
 
-		                                       matrix_Gcomplex[group2_index * dimension + group2_index] += 1;
-                                              }
-                                              group2_counter++;
-                                            }
-				        break;
+					if(current1->isG2) {
+						group2_index = circuit_simulation.number_of_nodes + group2_counter;
+						stampc(matrix_Gcomplex, Gcomplex, dimension, group2_index, group2_index, 1.0);
+						group2_counter++;
+					}
+					break;
 
 				case CURRENT_SOURCE:
-				        if(run == 0) {
-					    temp_val = 0;
-					    
-					    if(current1 -> ac != NULL) {
-						angle_rad = current1 -> ac -> phase * (M_PI / 180);
-						
-						temp_val =  current1 -> ac -> mag * (cos(angle_rad) + sin(angle_rad) * I);
-					    }
-					    
-					    
-					    if (current1->positive_terminal)
-					    {			
-						vector_b_complex[current1->positive_terminal - 1] -= temp_val;	
-					    }
+					if(run == 0) {
+						temp_val = 0;
+					
+						if(current1 -> ac != NULL) {
+							angle_rad = current1 -> ac -> phase * (M_PI / 180);
+					
+							temp_val =  current1 -> ac -> mag * (cos(angle_rad) + sin(angle_rad) * I);
+						}
+					
+					
+						if (current1->positive_terminal)
+						{			
+							vector_b_complex[current1->positive_terminal - 1] -= temp_val;	
+						}
 
-					    if (current1->negative_terminal)
-					    {
-						vector_b_complex[current1->negative_terminal - 1] += temp_val;
-					    }
-
-                                            
-                                   
+						if (current1->negative_terminal)
+						{
+							vector_b_complex[current1->negative_terminal - 1] += temp_val;
+						}                   
+                          
 					}
 					break;
 
 				case VOLTAGE_SOURCE:
 				case SHORT_CIRCUIT:
-				        group2_index = circuit_simulation.number_of_nodes + group2_counter;
+				    group2_index = circuit_simulation.number_of_nodes + group2_counter;
 					
-					if (circuit_simulation.matrix_sparsity == SPARSE)
-					{
-					      if (current1->positive_terminal)
-					      {						
-						      cs_ci_entry (Gcomplex, current1->positive_terminal - 1, group2_index, 1.0);
-						      cs_ci_entry (Gcomplex, group2_index, current1->positive_terminal - 1, 1.0);
-					      }
-					      
-					      if (current1->negative_terminal)
-					      {	
-						      cs_ci_entry (Gcomplex, current1->negative_terminal - 1, group2_index, -1.0);
-						      cs_ci_entry (Gcomplex, group2_index, current1->negative_terminal - 1, -1.0);
-					      }
+					if (current1->positive_terminal)
+					{						
+						stampc(matrix_Gcomplex, Gcomplex, dimension, current1->positive_terminal - 1, group2_index, 1.0);
+						stampc(matrix_Gcomplex, Gcomplex, dimension, group2_index, current1->positive_terminal - 1, 1.0);
 					}
-					else {
-					      if (current1->positive_terminal)
-					      {
-						      matrix_Gcomplex[(current1->positive_terminal - 1) * dimension + group2_index] += 1;
-						      matrix_Gcomplex[group2_index * dimension + (current1->positive_terminal - 1)] += 1;
-					      }
-
-					      if (current1->negative_terminal)
-					      {
-						      matrix_Gcomplex[(current1->negative_terminal - 1) * dimension + group2_index] -= 1;
-						      matrix_Gcomplex[group2_index * dimension + (current1->negative_terminal - 1)] -= 1;
-					      } 
+					
+					if (current1->negative_terminal)
+					{	
+						stampc(matrix_Gcomplex, Gcomplex, dimension, current1->negative_terminal - 1, group2_index, -1.0);
+						stampc(matrix_Gcomplex, Gcomplex, dimension, group2_index, current1->negative_terminal - 1, -1.0);
 					}
 					
 					if(current1->type == VOLTAGE_SOURCE && run == 0) {
 					    temp_val = 0;
 					    
 					    if(current1 -> ac != NULL) {
-						angle_rad = current1 -> ac -> phase * (M_PI / 180);
+							angle_rad = current1 -> ac -> phase * (M_PI / 180);
 						
-						temp_val =  current1 -> ac -> mag * (cos(angle_rad) + sin(angle_rad) * I);
+							temp_val =  current1 -> ac -> mag * (cos(angle_rad) + sin(angle_rad) * I);
 					    }
 					    			    
 					    vector_b_complex[group2_index] += temp_val;
 					}
 					
 					group2_counter++;
-				        break;
+				    break;
 				case INDUCTOR:
 
 					group2_index = circuit_simulation.number_of_nodes + group2_counter;
 
-					if (circuit_simulation.matrix_sparsity == SPARSE)
-					{
-					      if (current1->positive_terminal)
-					      {	
-						      cs_ci_entry (Gcomplex, current1->positive_terminal - 1, group2_index, 1.0);
-						      cs_ci_entry (Gcomplex, group2_index, current1->positive_terminal - 1, 1.0);
-					      }
-					      
-					      if (current1->negative_terminal)
-					      {	
-						      cs_ci_entry (Gcomplex, current1->negative_terminal - 1, group2_index, -1.0);
-						      cs_ci_entry (Gcomplex, group2_index, current1->negative_terminal - 1, -1.0);
-					      }
-					      
-					      cs_ci_entry (Gcomplex, group2_index, group2_index, 0.0 -current1->value * omega * I);
+					if (current1->positive_terminal)
+					{	
+						stampc(matrix_Gcomplex, Gcomplex, dimension, current1->positive_terminal - 1, group2_index, 1.0);
+						stampc(matrix_Gcomplex, Gcomplex, dimension, group2_index, current1->positive_terminal - 1, 1.0);
 					}
-					else {
-					      if (current1->positive_terminal)
-					      {
-						      matrix_Gcomplex[(current1->positive_terminal - 1) * dimension + group2_index] += 1;
-						      matrix_Gcomplex[group2_index * dimension + (current1->positive_terminal - 1)] += 1;
-					      }
-
-					      if (current1->negative_terminal)
-					      {
-						      matrix_Gcomplex[(current1->negative_terminal - 1) * dimension + group2_index] -= 1;
-						      matrix_Gcomplex[group2_index * dimension + (current1->negative_terminal - 1)] -= 1;
-					      }
-					      
-					      matrix_Gcomplex[group2_index * dimension + group2_index] -= current1->value * omega * I;	
+					
+					if (current1->negative_terminal)
+					{	
+						stampc(matrix_Gcomplex, Gcomplex, dimension, current1->negative_terminal - 1, group2_index, -1.0);
+						stampc(matrix_Gcomplex, Gcomplex, dimension, group2_index, current1->negative_terminal - 1, -1.0);
 					}
+					
+					stampc(matrix_Gcomplex, Gcomplex, dimension, group2_index, group2_index, 0.0 -current1->value * omega * I);
 
 					group2_counter++;
 
 					break;
-                                 case VOLTAGE_CONTROLLED_CURRENT_SOURCE:
-                                        if (circuit_simulation.matrix_sparsity == SPARSE) {
-					     if(current1 -> positive_terminal) {
-						    if(current1 -> in_positive_terminal) {
-                                                           cs_ci_entry(Gcomplex, current1->positive_terminal - 1, current1 -> in_positive_terminal - 1,  current1->value);
-						    }
-
-						     if(current1 -> in_negative_terminal) {
-                                                           cs_ci_entry(Gcomplex, current1->positive_terminal - 1, current1 -> in_negative_terminal - 1,  -current1->value);
-						    }
-						}
-		
-						if(current1 -> negative_terminal) {
-						    if(current1 -> in_positive_terminal) {
-                                                         cs_ci_entry(Gcomplex, current1->negative_terminal - 1, current1 -> in_positive_terminal - 1,  -current1->value);
-						    }
-
-						     if(current1 -> in_negative_terminal) {
-							   cs_ci_entry(Gcomplex, current1->negative_terminal - 1, current1 -> in_negative_terminal - 1,  current1->value);
-						    }
-						}
-                                        }
-                                        else {
-                                           if(current1 -> positive_terminal) {
-						    if(current1 -> in_positive_terminal) {
-							 matrix_Gcomplex[(current1->positive_terminal - 1) * dimension + (current1 -> in_positive_terminal - 1)]+=  current1->value;
-						    }
-
-						     if(current1 -> in_negative_terminal) {
-							  matrix_Gcomplex[(current1->positive_terminal - 1) * dimension + (current1 -> in_negative_terminal - 1)] -=  current1->value;
-						    }
-						}
-		
-						if(current1 -> negative_terminal) {
-						    if(current1 -> in_positive_terminal) {
-							 matrix_Gcomplex[(current1->negative_terminal - 1) * dimension + (current1 -> in_positive_terminal - 1)] -=  current1->value;
-						    }
-
-						     if(current1 -> in_negative_terminal) {
-							  matrix_Gcomplex[(current1->negative_terminal - 1) * dimension + (current1 -> in_negative_terminal - 1)] +=  current1->value;
-						    }
+				case VOLTAGE_CONTROLLED_CURRENT_SOURCE:
+					if(current1 -> positive_terminal) {
+						if(current1 -> in_positive_terminal) {
+							stampc(matrix_Gcomplex, Gcomplex, dimension, current1->positive_terminal - 1, current1 -> in_positive_terminal - 1,  current1->value);
 						}
 
-                                        }
-                                        break;
-                                 case VOLTAGE_CONTROLLED_VOLTAGE_SOURCE:
-                                        group2_index = circuit_simulation.number_of_nodes + group2_counter;
+						if(current1 -> in_negative_terminal) {
+							stampc(matrix_Gcomplex, Gcomplex, dimension, current1->positive_terminal - 1, current1 -> in_negative_terminal - 1,  -current1->value);
+						}
+					}
+	
+					if(current1 -> negative_terminal) {
+						if(current1 -> in_positive_terminal) {
+							stampc(matrix_Gcomplex, Gcomplex, dimension, current1->negative_terminal - 1, current1 -> in_positive_terminal - 1,  -current1->value);
+						}
 
-                                        
-                                        if (circuit_simulation.matrix_sparsity == SPARSE) {
-                                              if (current1->positive_terminal)
-					      {
-						      cs_ci_entry(Gcomplex, current1->positive_terminal - 1, group2_index, 1.0);
-						      cs_ci_entry(Gcomplex, group2_index, current1->positive_terminal - 1, 1.0);
-					      }
+						if(current1 -> in_negative_terminal) {
+							stampc(matrix_Gcomplex, Gcomplex, dimension, current1->negative_terminal - 1, current1 -> in_negative_terminal - 1,  current1->value);
+						}
+					}
+					break;
+				case VOLTAGE_CONTROLLED_VOLTAGE_SOURCE:
+					group2_index = circuit_simulation.number_of_nodes + group2_counter;
+					
+					if (current1->positive_terminal)
+					{
+						stampc(matrix_Gcomplex, Gcomplex, dimension, current1->positive_terminal - 1, group2_index, 1.0);
+						stampc(matrix_Gcomplex, Gcomplex, dimension, group2_index, current1->positive_terminal - 1, 1.0);
+					}
 
-					      if (current1->negative_terminal)
-					      {
-						      cs_ci_entry(Gcomplex, current1->negative_terminal - 1, group2_index, -1.0);
-						      cs_ci_entry(Gcomplex, group2_index, current1->negative_terminal - 1, -1.0);
-					      }
+					if (current1->negative_terminal)
+					{
+						stampc(matrix_Gcomplex, Gcomplex, dimension, current1->negative_terminal - 1, group2_index, -1.0);
+						stampc(matrix_Gcomplex, Gcomplex, dimension, group2_index, current1->negative_terminal - 1, -1.0);
+					}
 
                                               
-                                               if (current1->in_positive_terminal) {
-                                                    cs_ci_entry(Gcomplex, group2_index, current1->in_positive_terminal - 1, -current1->value);                                             
-                  
-                                               }
+					if (current1->in_positive_terminal) {
+						stampc(matrix_Gcomplex, Gcomplex, dimension, group2_index, current1->in_positive_terminal - 1, -current1->value);                                             
+					}
 
-                                                if (current1->in_negative_terminal) {                                             
-                                                    cs_ci_entry(Gcomplex, group2_index, current1->in_negative_terminal - 1, current1->value);       
-                                               }
-
-                                        }
-                                        else {
-                                             if (current1->positive_terminal) {
-                                                 matrix_Gcomplex[(current1->positive_terminal - 1) * dimension + group2_index] += 1;
-                                                 matrix_Gcomplex[group2_index * dimension + (current1->positive_terminal - 1)] += 1;
-                                             }
-
-                                              if (current1->negative_terminal)
-					      {
-						      matrix_Gcomplex[(current1->negative_terminal - 1) * dimension + group2_index] -= 1;
-						      matrix_Gcomplex[group2_index * dimension + (current1->negative_terminal - 1)] -= 1;
-					      }
-
-                                               if (current1->in_positive_terminal) {                                             
-                                                 matrix_Gcomplex[group2_index * dimension + (current1->in_positive_terminal - 1)] -=  current1->value;
-                                               }
-
-                                                if (current1->in_negative_terminal) {                                             
-                                                 matrix_Gcomplex[group2_index * dimension + (current1->in_negative_terminal - 1)] =  current1->value;
-                                               }
-                                        }
-                                        group2_counter++;
-                                        break;
+					if (current1->in_negative_terminal) {                                             
+						stampc(matrix_Gcomplex, Gcomplex, dimension, group2_index, current1->in_negative_terminal - 1, current1->value);       
+					}
+                                        
+                                        
+					group2_counter++;
+					break;
 				default:
 					break;
 

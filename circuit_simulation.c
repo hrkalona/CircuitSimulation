@@ -4,7 +4,7 @@ double *matrix_G, *matrix_C, *vector_b, *vector_y, *vector_x, *temp_matrix, *tem
 double *inv_preconditioner;
 int *transposition;
 twoTerminalsElement** sources;
-Avl_node *root_node;
+circuitSimulation circuit_simulation;
 
 twoTerminalsElement *head_twoTerminalsElement_list = NULL, *last_twoTerminalsElement_list = NULL;
 threeTerminalsElement *head_threeTerminalsElement_list = NULL, *last_threeTerminalsElement_list = NULL;

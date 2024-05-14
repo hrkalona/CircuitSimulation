@@ -1,6 +1,9 @@
 #include "circuit_simulation.h" 
 
 int counter = 1;
+unsigned int non_zeroes_G;
+unsigned int non_zeroes_C;
+unsigned int non_zeroes_Gcomplex;
 
 void parseInput(FILE *p_file) {
   char line[SIZE_OF_LINE];

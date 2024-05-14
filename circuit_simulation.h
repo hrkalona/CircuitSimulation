@@ -16,15 +16,19 @@
 #include "avl_tree_string_mapping.h"
 
 
-unsigned int non_zeroes_G;
-unsigned int non_zeroes_C;
-unsigned int non_zeroes_Gcomplex;
+extern unsigned int non_zeroes_G;
+extern unsigned int non_zeroes_C;
+extern unsigned int non_zeroes_Gcomplex;
 
 extern twoTerminalsElement *head_twoTerminalsElement_list, *last_twoTerminalsElement_list;
 extern threeTerminalsElement *head_threeTerminalsElement_list, *last_threeTerminalsElement_list;
 extern fourTerminalsElement *head_fourTerminalsElement_list, *last_fourTerminalsElement_list;
 
 extern twoTerminalsElement** sources;
+
+extern unsigned int ground_found;
+extern Avl_node *root_node;
+extern unsigned int current_mapping;
 
 /* Double routines */
 extern double *matrix_G;

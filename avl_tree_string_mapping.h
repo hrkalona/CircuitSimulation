@@ -16,11 +16,6 @@ typedef struct  Avl_node {
    int ht; // height information for the avl tree
 } Avl_node;
 
-Avl_node *root_node;  // the root of the avl tree
-unsigned int current_mapping; //the latest mapping used, either new or old
-
-unsigned int ground_found;  //flag
-
 /*This function maps the name string to a unique integer identifier.
 Checks whether the same name already exists (making non case-sensitive comparison) otherwise creates
 a new mapping.Returns the integer identifier.*/

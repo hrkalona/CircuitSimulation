@@ -1,5 +1,8 @@
 #include "avl_tree_string_mapping.h"
 
+unsigned int ground_found;  //flag
+unsigned int current_mapping; //the latest mapping used, either new or old
+Avl_node *root_node;
 
 int insert_node(char *x) {
   int i;

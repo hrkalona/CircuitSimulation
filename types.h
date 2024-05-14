@@ -209,5 +209,5 @@ typedef struct {
     unsigned int group2_elements; // Group 2: V, L
 } circuitSimulation;
 
-circuitSimulation circuit_simulation;
+extern circuitSimulation circuit_simulation;
 #endif
