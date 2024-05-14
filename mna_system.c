@@ -119,6 +119,25 @@ void createMnaSystemDC(void)
 						vector_b[current1->negative_terminal - 1] += current1->value;
 					}
 
+					if(current1->isG2) {
+						group2_index = circuit_simulation.number_of_nodes + group2_counter;
+
+						if (current1->positive_terminal)
+						{
+							stamp(matrix_G, G, dimension, current1->positive_terminal - 1, group2_index, 1.0);
+						}
+
+						if (current1->negative_terminal)
+						{						
+							stamp(matrix_G, G, dimension, current1->negative_terminal - 1, group2_index, -1.0);
+						}
+
+						stamp(matrix_G, G, dimension, group2_index, group2_index, 1.0);
+
+						vector_b[group2_index] += current1->value;
+
+						group2_counter++;
+					}
 
 					break;
 				case CAPACITOR:
@@ -412,6 +431,11 @@ void createMnaSystemTransient(int run, double time_step, double fin_time)
 					{
 						createTransientSteps( current1->transient, time_step, fin_time );
 					}
+
+					if(current1->isG2) {
+						group2_counter++;
+					}
+
 					break;
 
 				case VOLTAGE_SOURCE:
@@ -799,8 +823,32 @@ void createMnaSystemAC(double f, long int run, long int internal_run) {
 						if (current1->negative_terminal)
 						{
 							vector_b_complex[current1->negative_terminal - 1] += temp_val;
-						}                   
-                          
+						}
+
+						if(current1->isG2) {
+							group2_index = circuit_simulation.number_of_nodes + group2_counter;
+							vector_b_complex[group2_index] += temp_val;
+						}					                      
+					}
+
+					if(current1->isG2) {
+						group2_index = circuit_simulation.number_of_nodes + group2_counter;
+
+						if (current1->positive_terminal)
+						{
+							stampc(matrix_Gcomplex, Gcomplex, dimension, current1->positive_terminal - 1, group2_index, 1.0);
+						}
+
+						if (current1->negative_terminal)
+						{						
+							stampc(matrix_Gcomplex, Gcomplex, dimension, current1->negative_terminal - 1, group2_index, -1.0);
+						}
+
+						stampc(matrix_Gcomplex, Gcomplex, dimension, group2_index, group2_index, 1.0);
+
+						vector_b_complex[group2_index] += temp_val;
+
+						group2_counter++;
 					}
 					break;
 

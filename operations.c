@@ -854,10 +854,10 @@ void TransientAnalysis(void)
 			for (j = 0, k = 0; j < circuit_simulation.number_of_elements[CURRENT_SOURCE] + circuit_simulation.group2_elements; j++)
 			{
 
-                                if(sources[j] == NULL) {
-                                    k++;
-                                    continue;
-                                }
+				if(sources[j] == NULL) {
+					k++;
+					continue;
+				}
 
 				switch (sources[j]->type)
 				{
@@ -872,6 +872,11 @@ void TransientAnalysis(void)
 						{
 							vector_e[sources[j]->negative_terminal - 1] +=
 									sources[j]->transient == NULL ? sources[j]->value : sources[j]->transient->vals[i];
+						}
+
+						if (sources[j]->isG2) {
+							vector_e[circuit_simulation.number_of_nodes + k] += sources[j]->transient == NULL ? sources[j]->value : sources[j]->transient->vals[i];
+							k++;
 						}
 						break;
 

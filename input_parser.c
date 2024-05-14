@@ -5,6 +5,61 @@ unsigned int non_zeroes_G;
 unsigned int non_zeroes_C;
 unsigned int non_zeroes_Gcomplex;
 
+void trim_trailing(char * str)
+{
+    int index, i;
+
+    /* Set default index */
+    index = -1;
+
+    /* Find last index of non-white space character */
+    i = 0;
+    while(str[i] != '\0')
+    {
+        if(str[i] != ' ' && str[i] != '\t' && str[i] != '\n')
+        {
+            index= i;
+        }
+
+        i++;
+    }
+
+    /* Mark next character to last non-white space character as NULL */
+    str[index + 1] = '\0';
+}
+
+
+int ends_with(char *str, const char *suffix)
+{
+    if (!str || !suffix)
+        return 0;
+
+	trim_trailing(str);
+    size_t lenstr = strlen(str);
+    size_t lensuffix = strlen(suffix);
+    if (lensuffix >  lenstr)
+        return 0;
+    return strncasecmp(str + lenstr - lensuffix, suffix, lensuffix) == 0;
+}
+
+void clear_suffix(char *str, const char *suffix) {
+	if (!str || !suffix)
+        return;
+    size_t lenstr = strlen(str);
+    size_t lensuffix = strlen(suffix);
+	 if (lensuffix >  lenstr)
+        return;
+	
+	for(int i = 0; i < lenstr; i++) {
+		if(i == lenstr - lensuffix) {
+			str[i] = '\n';
+		}
+		else if(i > lenstr - lensuffix) {
+			str[i] = '\0';
+		}
+	}
+}
+
 void parseInput(FILE *p_file) {
   char line[SIZE_OF_LINE];
   char *temp;
@@ -1322,9 +1377,14 @@ void parseInput(FILE *p_file) {
 		}
 		
 		circuit_simulation.group1_elements++;
-	      
+
 		current1 -> type = CURRENT_SOURCE;
-                current1 -> isG2 = 0;
+        current1 -> isG2 = ends_with(line, "G2");
+
+		if(current1->isG2) {
+			clear_suffix(line, "G2");
+			circuit_simulation.group2_elements++;
+		}
 	    	     
 		temp = strtok(line + i + 1, "\t ");
 		
@@ -2576,6 +2636,22 @@ void parseInput(FILE *p_file) {
 		current1 -> next = NULL;
 		
 		insertTwoTerminalsElement(current1);
+
+		if(current1 -> isG2) {
+			if(current1 -> positive_terminal) {
+	        	non_zeroes_G++;
+		    	non_zeroes_Gcomplex++;
+			}
+		
+			if(current1 -> negative_terminal) {
+				non_zeroes_G++;
+				non_zeroes_Gcomplex++;
+			}
+
+			non_zeroes_G++;
+		    non_zeroes_Gcomplex++;
+
+		}
 		
 		break;
 		
