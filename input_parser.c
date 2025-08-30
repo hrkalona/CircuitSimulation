@@ -3424,7 +3424,10 @@ void parseInput(FILE *p_file) {
 		    }
 		}
 		
-		if(!strcasecmp(temp, "OPTIONS")) {
+		if(!strcasecmp(temp, "END")) {
+			goto stop; //I know right?
+		}
+		else if(!strcasecmp(temp, "OPTIONS")) {
 		    do {
 			temp = strtok(NULL, "\t \n=");
 			
@@ -4089,11 +4092,13 @@ void parseInput(FILE *p_file) {
 	counter++;
 	
     }
+
+	stop:
     /* check whether the ground node found .if not terminate the simulation*/
     if(!ground_found) {
         printf("Ground node not found.\n");
-	printf("Terminating.\n");
-	exit(-1);   
+		printf("Terminating.\n");
+		exit(-1);   
     }
 
     printf("\n\nParsing results. The circuit contains:\n\n");

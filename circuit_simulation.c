@@ -598,7 +598,7 @@ void Graph(void)
 				fprintf( file_ptr, "\"V%s\" -> \"%s\";\n", current1->string_name,
 						(circuit_simulation.plot_settings + current1->negative_terminal)->name );
 				break;
-                        case SHORT_CIRCUIT:
+            case SHORT_CIRCUIT:
 				fprintf( file_ptr, "node [shape=circle,  style=bold, color=black];\n" );
 				fprintf( file_ptr, "\"%s\"\n", (circuit_simulation.plot_settings + current1->positive_terminal)->name );
 				fprintf( file_ptr, "node [shape=circle,  style=bold, color=black];\n" );
@@ -621,7 +621,7 @@ void Graph(void)
 				fprintf( file_ptr, "\"E%s\" -> \"%s\";\n", current1->string_name,
 						(circuit_simulation.plot_settings + current1->negative_terminal)->name );
 				break;
-                        case VOLTAGE_CONTROLLED_CURRENT_SOURCE:
+            case VOLTAGE_CONTROLLED_CURRENT_SOURCE:
 				fprintf( file_ptr, "node [shape=circle,  style=bold, color=black];\n" );
 				fprintf( file_ptr, "\"%s\"\n", (circuit_simulation.plot_settings + current1->positive_terminal)->name );
 				fprintf( file_ptr, "node [shape=square,  style=bold, color=cyan];\n" );
